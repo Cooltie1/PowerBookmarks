@@ -48,16 +48,18 @@ window.addEventListener('DOMContentLoaded', () => {
         if (folderInput.files.length > 0) {
             const first = folderInput.files[0];
             const basePath = first.path.replace(first.webkitRelativePath, '');
-            selected.textContent = path.basename(basePath);
-
             const bookmarksFile = await findBookmarksJson(basePath);
+
             if (bookmarksFile) {
+                selected.textContent = bookmarksFile;
                 const names = await readBookmarkNames(bookmarksFile);
                 names.forEach(name => {
                     const li = document.createElement('li');
                     li.textContent = name;
                     listEl.appendChild(li);
                 });
+            } else {
+                selected.textContent = 'Bookmarks file not found';
             }
         } else {
             selected.textContent = '';
