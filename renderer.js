@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+const { ipcRenderer } = require('electron');
 
 async function findBookmarksJson(dir) {
     const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -33,22 +34,17 @@ async function readBookmarkNames(filePath) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    const folderInput = document.getElementById('folder-input');
     const chooseBtn = document.getElementById('choose-folder');
     const selected = document.getElementById('selected-folder');
     const listEl = document.getElementById('bookmark-list');
 
-    chooseBtn.addEventListener('click', () => {
-        folderInput.click();
-    });
-
-    folderInput.addEventListener('change', async () => {
+    chooseBtn.addEventListener('click', async () => {
+        const folderPath = await ipcRenderer.invoke('select-folder');
         listEl.innerHTML = '';
+        selected.textContent = '';
 
-        if (folderInput.files.length > 0) {
-            const first = folderInput.files[0];
-            const basePath = first.path.replace(first.webkitRelativePath, '');
-            const bookmarksFile = await findBookmarksJson(basePath);
+        if (folderPath) {
+            const bookmarksFile = await findBookmarksJson(folderPath);
 
             if (bookmarksFile) {
                 selected.textContent = bookmarksFile;
@@ -61,8 +57,6 @@ window.addEventListener('DOMContentLoaded', () => {
             } else {
                 selected.textContent = 'Bookmarks file not found';
             }
-        } else {
-            selected.textContent = '';
         }
     });
 

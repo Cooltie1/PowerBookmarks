@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -11,6 +11,14 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
+
+  ipcMain.handle('select-folder', async () => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory']
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return result.filePaths[0];
+  });
 }
 
 app.whenReady().then(createWindow);
