@@ -4,15 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PowerBookmarks</title>
+    <style>
+        #folder-selector {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        #selected-folder {
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
 
     <h1>PowerBookmarks</h1>
-    <div id="new-bookmark">
-        <input type="text" id="bookmark-input" placeholder="Enter a URL" />
-        <button id="add-btn">Add Bookmark</button>
+    <div id="folder-selector">
+        <input type="file" id="folder-input" style="display: none;" webkitdirectory directory />
+        <button id="choose-folder">Choose Folder</button>
+        <span id="selected-folder"></span>
     </div>
-    <ul id="bookmark-list"></ul>
 
     <script src="renderer.js"></script>
 
