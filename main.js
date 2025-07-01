@@ -14,8 +14,9 @@ function createWindow() {
 
   ipcMain.handle('select-folder', async () => {
     const result = await dialog.showOpenDialog(win, {
-      properties: ['openDirectory']
+      properties: ['openDirectory'],
     });
+
     if (result.canceled || result.filePaths.length === 0) return null;
     return result.filePaths[0];
   });
