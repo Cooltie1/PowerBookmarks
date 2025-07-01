@@ -38,32 +38,62 @@ window.addEventListener('DOMContentLoaded', () => {
     selected.textContent = path.basename(folderPath);
 
     const bookmarksFile = await findBookmarksJson(folderPath);
-    if (bookmarksFile) {
-      try {
-        const content = await fs.readFile(bookmarksFile, 'utf-8');
-        const data = JSON.parse(content);
-        const items = Array.isArray(data.items) ? data.items : [];
+    if (!bookmarksFile) {
+      list.textContent = 'bookmarks.json not found';
+      return;
+    }
 
-        items.forEach(item => {
-          const li = document.createElement('li');
-          if (item.children && item.displayName) {
-            li.textContent = `Group: ${item.displayName}`;
-          } else {
-            li.textContent = `Bookmark: ${item.name}`;
-          }
-          list.appendChild(li);
-        });
+    try {
+      const content = await fs.readFile(bookmarksFile, 'utf-8');
+      const data = JSON.parse(content);
+      const items = Array.isArray(data.items) ? data.items : [];
 
-      } catch (e) {
-        console.error('Failed to read bookmarks.json:', e);
-        const li = document.createElement('li');
-        li.textContent = 'Failed to load bookmarks';
-        list.appendChild(li);
-      }
-    } else {
-      const li = document.createElement('li');
-      li.textContent = 'bookmarks.json not found';
-      list.appendChild(li);
+      items.forEach(item => {
+        if (item.children && item.displayName) {
+          // Group with children
+          const container = document.createElement('div');
+          container.className = 'bookmark-item parent';
+
+          const label = document.createElement('span');
+          label.textContent = item.displayName;
+
+          const icon = document.createElement('span');
+          icon.className = 'toggle-icon';
+          icon.textContent = '▼';
+
+          const childrenBox = document.createElement('div');
+          childrenBox.className = 'children-container';
+
+          item.children.forEach(childName => {
+            const childDiv = document.createElement('div');
+            childDiv.className = 'child-item';
+            childDiv.textContent = childName;
+            childrenBox.appendChild(childDiv);
+          });
+
+          container.appendChild(label);
+          container.appendChild(icon);
+          list.appendChild(container);
+          list.appendChild(childrenBox);
+
+          // Expand/collapse logic
+          container.addEventListener('click', () => {
+            const isHidden = childrenBox.classList.toggle('hidden');
+            icon.textContent = isHidden ? '▼' : '▲';
+          });
+
+        } else {
+          // Plain bookmark
+          const bookmarkDiv = document.createElement('div');
+          bookmarkDiv.className = 'bookmark-item';
+          bookmarkDiv.textContent = item.name;
+          list.appendChild(bookmarkDiv);
+        }
+      });
+
+    } catch (e) {
+      console.error('Failed to read bookmarks.json:', e);
+      list.textContent = 'Failed to load bookmarks';
     }
   });
 });

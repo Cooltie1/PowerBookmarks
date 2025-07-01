@@ -6,24 +6,65 @@
   <title>PowerBookmarks</title>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 20px;
+        font-family: sans-serif;
+        padding: 20px;
+        background: #f9f9f9;
     }
 
     #folder-selector {
-      position: absolute;
-      top: 10px;
-      right: 10px;
+        position: absolute;
+        top: 10px;
+        right: 10px;
     }
 
-    #bookmark-json {
-      margin-top: 40px;
-      background: #f4f4f4;
-      padding: 10px;
-      border-radius: 8px;
-      white-space: pre-wrap;
+    #bookmark-list {
+        margin-top: 40px;
+        padding-left: 0;
     }
-  </style>
+
+    .bookmark-item {
+        background: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .bookmark-item:hover {
+        background: #f0f0f0;
+    }
+
+    .children-container {
+        margin-left: 20px;
+        margin-top: 6px;
+    }
+
+    .child-item {
+        background: #eef3ff;
+        border: 1px solid #ccd5ff;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        font-size: 0.95em;
+    }
+
+    .toggle-icon {
+        font-size: 14px;
+        margin-left: 8px;
+        user-select: none;
+    }
+
+    .hidden {
+        display: none;
+    }
+    </style>
+
 </head>
 <body>
   <div style="display: flex; justify-content: space-between; align-items: center;">
