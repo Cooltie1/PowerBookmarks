@@ -35,14 +35,48 @@ async function getBookmarkDisplayName(bookmarkFolder, name) {
   }
 }
 
+async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
+  const filePath = path.join(bookmarkFolder, `${bookmarkName}.bookmark.json`);
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+    const sectionId = data.explorationState?.activeSection;
+
+    let sectionName = 'Unknown';
+    if (sectionId) {
+      // Go up from bookmarks/ to definition/
+      const definitionFolder = path.dirname(bookmarkFolder);
+      const pageJsonPath = path.join(definitionFolder, 'pages', sectionId, 'page.json');
+
+      try {
+        const pageContent = await fs.readFile(pageJsonPath, 'utf-8');
+        const pageData = JSON.parse(pageContent);
+        sectionName = pageData.displayName || sectionId;
+      } catch (e) {
+        console.warn(`Failed to read page.json for section ${sectionId}`, e.message);
+        sectionName = sectionId; // fallback to raw ID
+      }
+    }
+
+    container.innerHTML = `
+      <strong>Page:</strong> ${sectionName}
+    `;
+  } catch (e) {
+    container.innerHTML = `<em>Could not load details for bookmark "${bookmarkName}"</em>`;
+    console.warn(`Failed to load bookmark ${bookmarkName}:`, e.message);
+  }
+}
+
 
 window.addEventListener('DOMContentLoaded', () => {
   const chooseBtn = document.getElementById('choose-folder');
   const selected = document.getElementById('selected-folder');
   const list = document.getElementById('bookmark-list');
+  const detailEl = document.getElementById('bookmark-details');
 
   chooseBtn.addEventListener('click', async () => {
     list.innerHTML = '';
+    detailEl.innerHTML = '';
     selected.textContent = '';
 
     const folderPath = await ipcRenderer.invoke('select-folder');
@@ -82,8 +116,14 @@ window.addEventListener('DOMContentLoaded', () => {
             const childDiv = document.createElement('div');
             childDiv.className = 'child-item';
             childDiv.textContent = displayName;
+
+            childDiv.addEventListener('click', (e) => {
+              e.stopPropagation(); // prevent group toggle
+              showBookmarkDetails(detailEl, path.dirname(bookmarksFile), childName);
+            });
+
             childrenBox.appendChild(childDiv);
-          }   
+          }
 
           container.appendChild(label);
           container.appendChild(icon);
@@ -98,12 +138,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
         } else {
           // Plain bookmark
-            const bookmarkDiv = document.createElement('div');
-            bookmarkDiv.className = 'bookmark-item';
-            const displayName = await getBookmarkDisplayName(path.dirname(bookmarksFile), item.name);
-            bookmarkDiv.textContent = displayName;
-            list.appendChild(bookmarkDiv);
+          const bookmarkDiv = document.createElement('div');
+          bookmarkDiv.className = 'bookmark-item';
+          const displayName = await getBookmarkDisplayName(path.dirname(bookmarksFile), item.name);
+          bookmarkDiv.textContent = displayName;
+          list.appendChild(bookmarkDiv);
 
+          bookmarkDiv.addEventListener('click', () => {
+            showBookmarkDetails(detailEl, path.dirname(bookmarksFile), item.name);
+          });
         }
       }
 

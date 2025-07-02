@@ -6,68 +6,116 @@
   <title>PowerBookmarks</title>
   <style>
     body {
-        font-family: sans-serif;
-        padding: 20px;
-        background: #f9f9f9;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    #folder-selector {
-        position: absolute;
-        top: 10px;
-        right: 10px;
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+      background-color: #fff;
+    }
+
+    .main {
+      display: flex;
+      gap: 30px;
+      flex: 1;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .column h3 {
+      margin: 0 0 10px 0;
+    }
+
+    .scroll-box {
+      overflow-y: auto;
+      flex: 1;
+      padding-right: 10px;
     }
 
     #bookmark-list {
-        margin-top: 40px;
-        padding-left: 0;
+      padding-left: 0;
     }
 
     .bookmark-item {
-        background: #ffffff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        transition: background 0.2s ease;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.2s ease;
     }
 
     .bookmark-item:hover {
-        background: #f0f0f0;
+      background: #f0f0f0;
     }
 
     .children-container {
-        margin-left: 20px;
-        margin-top: 6px;
+      margin-left: 20px;
+      margin-top: 6px;
     }
 
     .child-item {
-        background: #eef3ff;
-        border: 1px solid #ccd5ff;
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin-bottom: 6px;
-        font-size: 0.95em;
+      background: #eef3ff;
+      border: 1px solid #ccd5ff;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      font-size: 0.95em;
     }
 
     .toggle-icon {
-        font-size: 14px;
-        margin-left: 8px;
-        user-select: none;
+      font-size: 14px;
+      margin-left: 8px;
+      user-select: none;
     }
 
     .hidden {
-        display: none;
+      display: none;
     }
-    </style>
 
+    #bookmark-details {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+
+    #folder-selector {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #selected-folder {
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <div style="display: flex; justify-content: space-between; align-items: center;">
+  <div class="header">
     <h1>PowerBookmarks</h1>
     <div id="folder-selector">
       <button id="choose-folder">Choose Folder</button>
@@ -75,8 +123,20 @@
     </div>
   </div>
 
-  <ul id="bookmark-list" style="margin-top: 20px; padding-left: 20px;"></ul>
-
+  <div class="main">
+    <div class="column">
+      <h3>Bookmarks</h3>
+      <div class="scroll-box">
+        <ul id="bookmark-list"></ul>
+      </div>
+    </div>
+    <div class="column">
+      <h3>Bookmark Details</h3>
+      <div class="scroll-box">
+        <div id="bookmark-details"></div>
+      </div>
+    </div>
+  </div>
 
   <script src="renderer.js"></script>
 </body>
