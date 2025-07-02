@@ -40,32 +40,66 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
     const data = JSON.parse(content);
+
     const sectionId = data.explorationState?.activeSection;
-
     let sectionName = 'Unknown';
-    if (sectionId) {
-      // Go up from bookmarks/ to definition/
-      const definitionFolder = path.dirname(bookmarkFolder);
-      const pageJsonPath = path.join(definitionFolder, 'pages', sectionId, 'page.json');
+    let visualNames = [];
 
+    if (sectionId) {
+      const definitionFolder = path.dirname(bookmarkFolder);
+      const pageFolder = path.join(definitionFolder, 'pages', sectionId);
+
+      // Load page displayName
       try {
+        const pageJsonPath = path.join(pageFolder, 'page.json');
         const pageContent = await fs.readFile(pageJsonPath, 'utf-8');
         const pageData = JSON.parse(pageContent);
         sectionName = pageData.displayName || sectionId;
       } catch (e) {
         console.warn(`Failed to read page.json for section ${sectionId}`, e.message);
-        sectionName = sectionId; // fallback to raw ID
+        sectionName = sectionId;
+      }
+
+      // Load visual names from visuals/[object]/visual.json
+      const visualsFolder = path.join(pageFolder, 'visuals');
+      try {
+        const visualDirs = await fs.readdir(visualsFolder, { withFileTypes: true });
+        for (const entry of visualDirs) {
+          if (entry.isDirectory()) {
+            const visualJsonPath = path.join(visualsFolder, entry.name, 'visual.json');
+            try {
+              const visualContent = await fs.readFile(visualJsonPath, 'utf-8');
+              const visualData = JSON.parse(visualContent);
+              if (visualData.name) {
+                visualNames.push(visualData.name);
+              }
+            } catch (e) {
+              // Ignore missing or malformed visual.json
+              console.warn(`Skipped visual: ${entry.name}`, e.message);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`Failed to read visuals folder for ${sectionId}`, e.message);
       }
     }
 
+    const visualsList = visualNames.length
+      ? `<ul>${visualNames.map(name => `<li>${name}</li>`).join('')}</ul>`
+      : '<em>No visuals found</em>';
+
     container.innerHTML = `
-      <strong>Page:</strong> ${sectionName}
+      <strong>Page:</strong> ${sectionName}<br><br>
+      <strong>Objects on Page:</strong><br>
+      ${visualsList}
     `;
   } catch (e) {
     container.innerHTML = `<em>Could not load details for bookmark "${bookmarkName}"</em>`;
     console.warn(`Failed to load bookmark ${bookmarkName}:`, e.message);
   }
 }
+
+
 
 
 window.addEventListener('DOMContentLoaded', () => {
