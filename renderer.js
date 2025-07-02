@@ -23,6 +23,19 @@ async function findBookmarksJson(dir) {
   return null;
 }
 
+async function getBookmarkDisplayName(bookmarkFolder, name) {
+  const filePath = path.join(bookmarkFolder, `${name}.bookmark.json`);
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+    return data.displayName || name;
+  } catch (e) {
+    console.warn(`Could not load ${filePath}`, e);
+    return name; // fallback to raw name
+  }
+}
+
+
 window.addEventListener('DOMContentLoaded', () => {
   const chooseBtn = document.getElementById('choose-folder');
   const selected = document.getElementById('selected-folder');
@@ -48,7 +61,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const data = JSON.parse(content);
       const items = Array.isArray(data.items) ? data.items : [];
 
-      items.forEach(item => {
+      for (const item of items) {
         if (item.children && item.displayName) {
           // Group with children
           const container = document.createElement('div');
@@ -64,12 +77,13 @@ window.addEventListener('DOMContentLoaded', () => {
           const childrenBox = document.createElement('div');
           childrenBox.className = 'children-container';
 
-          item.children.forEach(childName => {
+          for (const childName of item.children) {
+            const displayName = await getBookmarkDisplayName(path.dirname(bookmarksFile), childName);
             const childDiv = document.createElement('div');
             childDiv.className = 'child-item';
-            childDiv.textContent = childName;
+            childDiv.textContent = displayName;
             childrenBox.appendChild(childDiv);
-          });
+          }   
 
           container.appendChild(label);
           container.appendChild(icon);
@@ -84,12 +98,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
         } else {
           // Plain bookmark
-          const bookmarkDiv = document.createElement('div');
-          bookmarkDiv.className = 'bookmark-item';
-          bookmarkDiv.textContent = item.name;
-          list.appendChild(bookmarkDiv);
+            const bookmarkDiv = document.createElement('div');
+            bookmarkDiv.className = 'bookmark-item';
+            const displayName = await getBookmarkDisplayName(path.dirname(bookmarksFile), item.name);
+            bookmarkDiv.textContent = displayName;
+            list.appendChild(bookmarkDiv);
+
         }
-      });
+      }
 
     } catch (e) {
       console.error('Failed to read bookmarks.json:', e);
