@@ -64,11 +64,13 @@
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: background 0.2s ease, border 0.2s ease;
+      border: 1px solid #F9F9F9;
     }
 
     .bookmark-item:hover {
       background: #e0e0e0;
+      border: 1px solid #e0e0e0;
     }
 
     .children-container {
@@ -84,11 +86,17 @@
       margin-bottom: 6px;
       font-size: 0.95em;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: background 0.2s ease, border 0.2s ease;
+      border: 1px solid #F9F9F9;
+
     }
 
     .child-item:hover {
       background: #e0e0e0;
+      border: 1px solid #e0e0e0;
+
+      
+      
     }
 
     .bookmark-item.active,
@@ -96,7 +104,6 @@
       background: #F1E7FD !important;
       color: #9B3CF3;
       border: 1px solid #9B3CF3;
-      border-radius: 8px;
     }
 
     .toggle-icon {
