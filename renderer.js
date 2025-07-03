@@ -186,16 +186,27 @@ window.addEventListener('DOMContentLoaded', () => {
   const selected = document.getElementById('selected-folder');
   const list = document.getElementById('bookmark-list');
   const detailEl = document.getElementById('bookmark-details');
+  let activeBookmarkEl = null;
+
+  function setActive(el) {
+    if (activeBookmarkEl) {
+      activeBookmarkEl.classList.remove('active');
+    }
+    activeBookmarkEl = el;
+    if (activeBookmarkEl) {
+      activeBookmarkEl.classList.add('active');
+    }
+  }
 
   chooseBtn.addEventListener('click', async () => {
-    list.innerHTML = '';
-    detailEl.innerHTML = '';
-    selected.textContent = '';
-
     const folderPath = await ipcRenderer.invoke('select-folder');
     if (!folderPath) return;
 
+    list.innerHTML = '';
+    detailEl.innerHTML = '';
     selected.textContent = path.basename(folderPath);
+    setActive(null);
+    chooseBtn.textContent = 'Change Project';
 
     const bookmarksFile = await findBookmarksJson(folderPath);
     if (!bookmarksFile) {
@@ -268,6 +279,7 @@ window.addEventListener('DOMContentLoaded', () => {
             childDiv.textContent = `\uD83D\uDD16 ${info.displayName}`; // 🔖 icon
             childDiv.addEventListener('click', (e) => {
               e.stopPropagation();
+              setActive(childDiv);
               showBookmarkDetails(detailEl, bookmarkFolder, info.name);
             });
             groupChildrenBox.appendChild(childDiv);
@@ -290,6 +302,7 @@ window.addEventListener('DOMContentLoaded', () => {
           bookmarkDiv.textContent = `\uD83D\uDD16 ${info.displayName}`; // 🔖 icon
           bookmarkDiv.addEventListener('click', (e) => {
             e.stopPropagation();
+            setActive(bookmarkDiv);
             showBookmarkDetails(detailEl, bookmarkFolder, info.name);
           });
           pageChildrenBox.appendChild(bookmarkDiv);
