@@ -9,7 +9,7 @@
       font-family: sans-serif;
       margin: 0;
       padding: 0;
-      background: #f9f9f9;
+      background: #efefef;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -54,12 +54,12 @@
     }
 
     .bookmark-item {
-      background: #ffffff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
+      background: inherit;
+      border: none;
+      border-radius: 0;
       padding: 10px 14px;
       margin-bottom: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      box-shadow: none;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -68,7 +68,7 @@
     }
 
     .bookmark-item:hover {
-      background: #f0f0f0;
+      background: #e0e0e0;
     }
 
     .children-container {
@@ -83,6 +83,12 @@
       padding: 8px 12px;
       margin-bottom: 6px;
       font-size: 0.95em;
+    }
+
+    .bookmark-item.active,
+    .child-item.active {
+      background: #F1E7FD !important;
+      color: #9B3CF3;
     }
 
     .toggle-icon {
