@@ -239,7 +239,7 @@ window.addEventListener('DOMContentLoaded', () => {
         pageContainer.className = 'bookmark-item parent';
 
         const pageLabel = document.createElement('span');
-        pageLabel.textContent = pageName;
+        pageLabel.textContent = `\uD83D\uDCC4 ${pageName}`; // 📄 icon
 
         const pageIcon = document.createElement('span');
         pageIcon.className = 'toggle-icon';
@@ -253,7 +253,7 @@ window.addEventListener('DOMContentLoaded', () => {
           groupContainer.className = 'bookmark-item parent';
 
           const groupLabel = document.createElement('span');
-          groupLabel.textContent = groupName;
+          groupLabel.textContent = `\uD83D\uDCC2 ${groupName}`; // 🗂 icon
 
           const groupIcon = document.createElement('span');
           groupIcon.className = 'toggle-icon';
@@ -265,7 +265,7 @@ window.addEventListener('DOMContentLoaded', () => {
           for (const info of bookmarks) {
             const childDiv = document.createElement('div');
             childDiv.className = 'child-item';
-            childDiv.textContent = info.displayName;
+            childDiv.textContent = `\uD83D\uDD16 ${info.displayName}`; // 🔖 icon
             childDiv.addEventListener('click', (e) => {
               e.stopPropagation();
               showBookmarkDetails(detailEl, bookmarkFolder, info.name);
@@ -287,7 +287,7 @@ window.addEventListener('DOMContentLoaded', () => {
         for (const info of pageData.ungrouped) {
           const bookmarkDiv = document.createElement('div');
           bookmarkDiv.className = 'bookmark-item';
-          bookmarkDiv.textContent = info.displayName;
+          bookmarkDiv.textContent = `\uD83D\uDD16 ${info.displayName}`; // 🔖 icon
           bookmarkDiv.addEventListener('click', (e) => {
             e.stopPropagation();
             showBookmarkDetails(detailEl, bookmarkFolder, info.name);
