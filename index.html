@@ -20,8 +20,8 @@
       justify-content: space-between;
       align-items: center;
       padding: 20px;
-      border-bottom: 1px solid #ddd;
-      background-color: #fff;
+      background: linear-gradient(90deg, #9B3CF3, #F1E7FD);
+      color: #fff;
     }
 
     .main {
@@ -121,8 +121,24 @@
       gap: 10px;
     }
 
+    #choose-folder {
+      background: #9B3CF3;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    #choose-folder:hover {
+      background: #7a2ddc;
+      transform: scale(1.05);
+    }
+
     #selected-folder {
       font-weight: bold;
+      color: #fff;
     }
   </style>
 </head>
@@ -130,8 +146,8 @@
   <div class="header">
     <h1>PowerBookmarks</h1>
     <div id="folder-selector">
-      <button id="choose-folder">Choose Folder</button>
       <span id="selected-folder"></span>
+      <button id="choose-folder">Select Project</button>
     </div>
   </div>
 

@@ -199,15 +199,14 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   chooseBtn.addEventListener('click', async () => {
-    list.innerHTML = '';
-    detailEl.innerHTML = '';
-    selected.textContent = '';
-    setActive(null);
-
     const folderPath = await ipcRenderer.invoke('select-folder');
     if (!folderPath) return;
 
+    list.innerHTML = '';
+    detailEl.innerHTML = '';
     selected.textContent = path.basename(folderPath);
+    setActive(null);
+    chooseBtn.textContent = 'Change Project';
 
     const bookmarksFile = await findBookmarksJson(folderPath);
     if (!bookmarksFile) {
