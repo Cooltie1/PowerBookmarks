@@ -91,6 +91,12 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
           }
         }
 
+        // Debugging: print each visual and its children
+        for (const [id, visual] of visualMap.entries()) {
+          const childNames = visual.children.map(c => c.id).join(', ');
+          console.log(`Visual ${id} children: ${childNames || 'none'}`);
+        }
+
         const visualContainer = document.createElement('div');
 
         function renderVisualItem(visual, depth = 0) {
