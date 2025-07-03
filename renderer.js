@@ -12,9 +12,7 @@ async function findBookmarksJson(dir) {
         try {
           await fs.access(candidate);
           return candidate;
-        } catch (e) {
-          // ignore
-        }
+        } catch {}
       }
       const result = await findBookmarksJson(fullPath);
       if (result) return result;
@@ -29,9 +27,8 @@ async function getBookmarkDisplayName(bookmarkFolder, name) {
     const content = await fs.readFile(filePath, 'utf-8');
     const data = JSON.parse(content);
     return data.displayName || name;
-  } catch (e) {
-    console.warn(`Could not load ${filePath}`, e);
-    return name; // fallback to raw name
+  } catch {
+    return name;
   }
 }
 
@@ -43,64 +40,115 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
 
     const sectionId = data.explorationState?.activeSection;
     let sectionName = 'Unknown';
-    let visualNames = [];
 
     if (sectionId) {
       const definitionFolder = path.dirname(bookmarkFolder);
       const pageFolder = path.join(definitionFolder, 'pages', sectionId);
 
-      // Load page displayName
+      // Load page name
       try {
         const pageJsonPath = path.join(pageFolder, 'page.json');
         const pageContent = await fs.readFile(pageJsonPath, 'utf-8');
         const pageData = JSON.parse(pageContent);
         sectionName = pageData.displayName || sectionId;
-      } catch (e) {
-        console.warn(`Failed to read page.json for section ${sectionId}`, e.message);
+      } catch {
         sectionName = sectionId;
       }
 
-      // Load visual names from visuals/[object]/visual.json
+      // Load and group visuals
       const visualsFolder = path.join(pageFolder, 'visuals');
       try {
         const visualDirs = await fs.readdir(visualsFolder, { withFileTypes: true });
+        const visualMap = new Map();
+
+        // First pass: read all visual.json files
         for (const entry of visualDirs) {
-          if (entry.isDirectory()) {
-            const visualJsonPath = path.join(visualsFolder, entry.name, 'visual.json');
-            try {
-              const visualContent = await fs.readFile(visualJsonPath, 'utf-8');
-              const visualData = JSON.parse(visualContent);
-              if (visualData.name) {
-                visualNames.push(visualData.name);
-              }
-            } catch (e) {
-              // Ignore missing or malformed visual.json
-              console.warn(`Skipped visual: ${entry.name}`, e.message);
-            }
+          if (!entry.isDirectory()) continue;
+          const folderName = entry.name;
+          const visualPath = path.join(visualsFolder, folderName, 'visual.json');
+
+          try {
+            const content = await fs.readFile(visualPath, 'utf-8');
+            const visualData = JSON.parse(content);
+            visualMap.set(folderName, {
+              id: folderName,
+              name: visualData.name || folderName,
+              parent: visualData.parentGroupName || null,
+              children: []
+            });
+          } catch (e) {
+            console.warn(`Failed to load visual: ${folderName}`, e.message);
           }
         }
+
+        // Build hierarchy
+        const roots = [];
+        for (const visual of visualMap.values()) {
+          if (visual.parent && visualMap.has(visual.parent)) {
+            visualMap.get(visual.parent).children.push(visual);
+          } else {
+            roots.push(visual);
+          }
+        }
+
+        const visualContainer = document.createElement('div');
+
+        function renderVisualItem(visual, depth = 0) {
+          const visualDiv = document.createElement('div');
+          visualDiv.className = 'bookmark-item';
+          visualDiv.style.marginLeft = `${depth * 20}px`;
+
+          const label = document.createElement('span');
+          label.textContent = visual.name;
+
+          visualDiv.appendChild(label);
+
+          if (visual.children.length > 0) {
+            const icon = document.createElement('span');
+            icon.className = 'toggle-icon';
+            icon.textContent = '▼';
+            visualDiv.appendChild(icon);
+
+            const childContainer = document.createElement('div');
+            childContainer.className = 'children-container';
+
+            for (const child of visual.children) {
+              childContainer.appendChild(renderVisualItem(child, depth + 1));
+            }
+
+            visualDiv.addEventListener('click', () => {
+              const hidden = childContainer.classList.toggle('hidden');
+              icon.textContent = hidden ? '▼' : '▲';
+            });
+
+            visualContainer.appendChild(visualDiv);
+            visualContainer.appendChild(childContainer);
+          } else {
+            visualContainer.appendChild(visualDiv);
+          }
+
+          return visualDiv;
+        }
+
+        for (const root of roots) {
+          renderVisualItem(root);
+        }
+
+        container.innerHTML = `<strong>Page:</strong> ${sectionName}<br><br><strong>Visuals (Grouped by parent):</strong><br>`;
+        container.appendChild(visualContainer);
+
       } catch (e) {
-        console.warn(`Failed to read visuals folder for ${sectionId}`, e.message);
+        console.warn(`Failed to read visuals folder:`, e.message);
+        container.innerHTML = `<strong>Page:</strong> ${sectionName}<br><br><em>Could not load visuals</em>`;
       }
+    } else {
+      container.innerHTML = `<strong>Page:</strong> Unknown<br><br><em>No active section found</em>`;
     }
-
-    const visualsList = visualNames.length
-      ? `<ul>${visualNames.map(name => `<li>${name}</li>`).join('')}</ul>`
-      : '<em>No visuals found</em>';
-
-    container.innerHTML = `
-      <strong>Page:</strong> ${sectionName}<br><br>
-      <strong>Objects on Page:</strong><br>
-      ${visualsList}
-    `;
   } catch (e) {
     container.innerHTML = `<em>Could not load details for bookmark "${bookmarkName}"</em>`;
     console.warn(`Failed to load bookmark ${bookmarkName}:`, e.message);
   }
 }
-
-
-
 
 window.addEventListener('DOMContentLoaded', () => {
   const chooseBtn = document.getElementById('choose-folder');
@@ -152,7 +200,7 @@ window.addEventListener('DOMContentLoaded', () => {
             childDiv.textContent = displayName;
 
             childDiv.addEventListener('click', (e) => {
-              e.stopPropagation(); // prevent group toggle
+              e.stopPropagation(); // prevent toggle
               showBookmarkDetails(detailEl, path.dirname(bookmarksFile), childName);
             });
 
@@ -164,12 +212,10 @@ window.addEventListener('DOMContentLoaded', () => {
           list.appendChild(container);
           list.appendChild(childrenBox);
 
-          // Expand/collapse logic
           container.addEventListener('click', () => {
             const isHidden = childrenBox.classList.toggle('hidden');
             icon.textContent = isHidden ? '▼' : '▲';
           });
-
         } else {
           // Plain bookmark
           const bookmarkDiv = document.createElement('div');
@@ -183,7 +229,6 @@ window.addEventListener('DOMContentLoaded', () => {
           });
         }
       }
-
     } catch (e) {
       console.error('Failed to read bookmarks.json:', e);
       list.textContent = 'Failed to load bookmarks';
