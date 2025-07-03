@@ -77,12 +77,18 @@
     }
 
     .child-item {
-      background: #eef3ff;
-      border: 1px solid #ccd5ff;
-      border-radius: 6px;
+      background: inherit;
+      border: none;
+      border-radius: 0;
       padding: 8px 12px;
       margin-bottom: 6px;
       font-size: 0.95em;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .child-item:hover {
+      background: #e0e0e0;
     }
 
     .bookmark-item.active,
