@@ -97,9 +97,12 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
           try {
             const content = await fs.readFile(visualPath, 'utf-8');
             const visualData = JSON.parse(content);
+
+            const displayName = visualData?.visual?.visualContainerObjects?.title?.[0]?.properties?.text?.expr?.literal?.value;
+
             visualMap.set(folderName, {
               id: folderName,
-              name: visualData.name || folderName,
+              name: displayName || visualData.name || folderName,
               parent: visualData.parentGroupName || null,
               children: []
             });
