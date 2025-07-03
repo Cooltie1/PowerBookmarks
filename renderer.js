@@ -98,7 +98,16 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
             const content = await fs.readFile(visualPath, 'utf-8');
             const visualData = JSON.parse(content);
 
-            const displayName = visualData?.visual?.visualContainerObjects?.title?.[0]?.properties?.text?.expr?.literal?.value;
+
+            const titleObject = visualData?.visual?.visualContainerObjects?.title?.[0];
+
+            const titleExpr = titleObject?.properties?.text?.expr?.Literal?.Value;
+
+            const displayName = titleExpr?.replace(/^'(.*)'$/, '$1');
+            console.log('titleObject:', titleObject);
+            console.log('titleExpr:', titleExpr);
+
+            console.log(displayName); // should output: Title on visual but not turned on
 
             visualMap.set(folderName, {
               id: folderName,
