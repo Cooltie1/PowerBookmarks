@@ -99,11 +99,18 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
             const visualData = JSON.parse(content);
 
 
+            // Pull the display name from two possible locations
+            // 1. Parent visuals store it under visualGroup.displayName
+            // 2. Child visuals use the title text under visual.visualContainerObjects
+
+            const groupName = visualData?.visualGroup?.displayName;
+
             const titleObject = visualData?.visual?.visualContainerObjects?.title?.[0];
-
             const titleExpr = titleObject?.properties?.text?.expr?.Literal?.Value;
+            const titleName = titleExpr?.replace(/^'(.*)'$/, '$1');
 
-            const displayName = titleExpr?.replace(/^'(.*)'$/, '$1');
+            const displayName = groupName || titleName;
+
             console.log('titleObject:', titleObject);
             console.log('titleExpr:', titleExpr);
 
