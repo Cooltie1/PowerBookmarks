@@ -32,6 +32,33 @@ async function getBookmarkDisplayName(bookmarkFolder, name) {
   }
 }
 
+async function getBookmarkInfo(bookmarkFolder, name) {
+  const filePath = path.join(bookmarkFolder, `${name}.bookmark.json`);
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+    const displayName = data.displayName || name;
+    const pageId = data.explorationState?.activeSection;
+    let pageName = 'Unknown';
+
+    if (pageId) {
+      const definitionFolder = path.dirname(bookmarkFolder);
+      const pageFolder = path.join(definitionFolder, 'pages', pageId);
+      try {
+        const pageContent = await fs.readFile(path.join(pageFolder, 'page.json'), 'utf-8');
+        const pageData = JSON.parse(pageContent);
+        pageName = pageData.displayName || pageId;
+      } catch {
+        pageName = pageId;
+      }
+    }
+
+    return { name, displayName, pageId, pageName };
+  } catch {
+    return { name, displayName: name, pageId: null, pageName: 'Unknown' };
+  }
+}
+
 async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
   const filePath = path.join(bookmarkFolder, `${bookmarkName}.bookmark.json`);
   try {
@@ -180,58 +207,103 @@ window.addEventListener('DOMContentLoaded', () => {
       const content = await fs.readFile(bookmarksFile, 'utf-8');
       const data = JSON.parse(content);
       const items = Array.isArray(data.items) ? data.items : [];
+      const bookmarkFolder = path.dirname(bookmarksFile);
+      const pages = new Map();
 
       for (const item of items) {
         if (item.children && item.displayName) {
-          // Group with children
-          const container = document.createElement('div');
-          container.className = 'bookmark-item parent';
-
-          const label = document.createElement('span');
-          label.textContent = item.displayName;
-
-          const icon = document.createElement('span');
-          icon.className = 'toggle-icon';
-          icon.textContent = '▼';
-
-          const childrenBox = document.createElement('div');
-          childrenBox.className = 'children-container';
-
           for (const childName of item.children) {
-            const displayName = await getBookmarkDisplayName(path.dirname(bookmarksFile), childName);
+            const info = await getBookmarkInfo(bookmarkFolder, childName);
+            const key = info.pageName;
+            if (!pages.has(key)) {
+              pages.set(key, { groups: new Map(), ungrouped: [] });
+            }
+            const pageEntry = pages.get(key);
+            if (!pageEntry.groups.has(item.displayName)) {
+              pageEntry.groups.set(item.displayName, []);
+            }
+            pageEntry.groups.get(item.displayName).push(info);
+          }
+        } else {
+          const info = await getBookmarkInfo(bookmarkFolder, item.name);
+          const key = info.pageName;
+          if (!pages.has(key)) {
+            pages.set(key, { groups: new Map(), ungrouped: [] });
+          }
+          pages.get(key).ungrouped.push(info);
+        }
+      }
+
+      for (const [pageName, pageData] of pages.entries()) {
+        const pageContainer = document.createElement('div');
+        pageContainer.className = 'bookmark-item parent';
+
+        const pageLabel = document.createElement('span');
+        pageLabel.textContent = pageName;
+
+        const pageIcon = document.createElement('span');
+        pageIcon.className = 'toggle-icon';
+        pageIcon.textContent = '▼';
+
+        const pageChildrenBox = document.createElement('div');
+        pageChildrenBox.className = 'children-container';
+
+        for (const [groupName, bookmarks] of pageData.groups.entries()) {
+          const groupContainer = document.createElement('div');
+          groupContainer.className = 'bookmark-item parent';
+
+          const groupLabel = document.createElement('span');
+          groupLabel.textContent = groupName;
+
+          const groupIcon = document.createElement('span');
+          groupIcon.className = 'toggle-icon';
+          groupIcon.textContent = '▼';
+
+          const groupChildrenBox = document.createElement('div');
+          groupChildrenBox.className = 'children-container';
+
+          for (const info of bookmarks) {
             const childDiv = document.createElement('div');
             childDiv.className = 'child-item';
-            childDiv.textContent = displayName;
-
+            childDiv.textContent = info.displayName;
             childDiv.addEventListener('click', (e) => {
-              e.stopPropagation(); // prevent toggle
-              showBookmarkDetails(detailEl, path.dirname(bookmarksFile), childName);
+              e.stopPropagation();
+              showBookmarkDetails(detailEl, bookmarkFolder, info.name);
             });
-
-            childrenBox.appendChild(childDiv);
+            groupChildrenBox.appendChild(childDiv);
           }
 
-          container.appendChild(label);
-          container.appendChild(icon);
-          list.appendChild(container);
-          list.appendChild(childrenBox);
+          groupContainer.appendChild(groupLabel);
+          groupContainer.appendChild(groupIcon);
+          pageChildrenBox.appendChild(groupContainer);
+          pageChildrenBox.appendChild(groupChildrenBox);
 
-          container.addEventListener('click', () => {
-            const isHidden = childrenBox.classList.toggle('hidden');
-            icon.textContent = isHidden ? '▼' : '▲';
-          });
-        } else {
-          // Plain bookmark
-          const bookmarkDiv = document.createElement('div');
-          bookmarkDiv.className = 'bookmark-item';
-          const displayName = await getBookmarkDisplayName(path.dirname(bookmarksFile), item.name);
-          bookmarkDiv.textContent = displayName;
-          list.appendChild(bookmarkDiv);
-
-          bookmarkDiv.addEventListener('click', () => {
-            showBookmarkDetails(detailEl, path.dirname(bookmarksFile), item.name);
+          groupContainer.addEventListener('click', () => {
+            const hidden = groupChildrenBox.classList.toggle('hidden');
+            groupIcon.textContent = hidden ? '▼' : '▲';
           });
         }
+
+        for (const info of pageData.ungrouped) {
+          const bookmarkDiv = document.createElement('div');
+          bookmarkDiv.className = 'bookmark-item';
+          bookmarkDiv.textContent = info.displayName;
+          bookmarkDiv.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showBookmarkDetails(detailEl, bookmarkFolder, info.name);
+          });
+          pageChildrenBox.appendChild(bookmarkDiv);
+        }
+
+        pageContainer.appendChild(pageLabel);
+        pageContainer.appendChild(pageIcon);
+        list.appendChild(pageContainer);
+        list.appendChild(pageChildrenBox);
+
+        pageContainer.addEventListener('click', () => {
+          const hidden = pageChildrenBox.classList.toggle('hidden');
+          pageIcon.textContent = hidden ? '▼' : '▲';
+        });
       }
     } catch (e) {
       console.error('Failed to read bookmarks.json:', e);
