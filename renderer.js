@@ -99,15 +99,16 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
 
         const visualContainer = document.createElement('div');
 
-        function renderVisualItem(visual, depth = 0) {
+        function renderVisualItem(visual, parentEl, depth = 0) {
           const visualDiv = document.createElement('div');
           visualDiv.className = 'bookmark-item';
           visualDiv.style.marginLeft = `${depth * 20}px`;
 
           const label = document.createElement('span');
           label.textContent = visual.name;
-
           visualDiv.appendChild(label);
+
+          parentEl.appendChild(visualDiv);
 
           if (visual.children.length > 0) {
             const icon = document.createElement('span');
@@ -118,26 +119,23 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
             const childContainer = document.createElement('div');
             childContainer.className = 'children-container';
 
-            for (const child of visual.children) {
-              childContainer.appendChild(renderVisualItem(child, depth + 1));
-            }
-
             visualDiv.addEventListener('click', () => {
               const hidden = childContainer.classList.toggle('hidden');
               icon.textContent = hidden ? '▼' : '▲';
             });
 
-            visualContainer.appendChild(visualDiv);
-            visualContainer.appendChild(childContainer);
-          } else {
-            visualContainer.appendChild(visualDiv);
+            for (const child of visual.children) {
+              renderVisualItem(child, childContainer, depth + 1);
+            }
+
+            parentEl.appendChild(childContainer);
           }
 
           return visualDiv;
         }
 
         for (const root of roots) {
-          renderVisualItem(root);
+          renderVisualItem(root, visualContainer, 0);
         }
 
         container.innerHTML = `<strong>Page:</strong> ${sectionName}<br><br><strong>Visuals (Grouped by parent):</strong><br>`;
