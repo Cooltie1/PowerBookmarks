@@ -163,7 +163,7 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
             visualDiv.appendChild(icon);
 
             const childContainer = document.createElement('div');
-            childContainer.className = 'children-container';
+            childContainer.className = 'children-container hidden';
 
             visualDiv.addEventListener('click', () => {
               const hidden = childContainer.classList.toggle('hidden');
@@ -276,7 +276,7 @@ window.addEventListener('DOMContentLoaded', () => {
         pageIcon.textContent = '▼';
 
         const pageChildrenBox = document.createElement('div');
-        pageChildrenBox.className = 'children-container';
+        pageChildrenBox.className = 'children-container hidden';
 
         for (const [groupName, bookmarks] of pageData.groups.entries()) {
           const groupContainer = document.createElement('div');
@@ -290,7 +290,7 @@ window.addEventListener('DOMContentLoaded', () => {
           groupIcon.textContent = '▼';
 
           const groupChildrenBox = document.createElement('div');
-          groupChildrenBox.className = 'children-container';
+          groupChildrenBox.className = 'children-container hidden';
 
           for (const info of bookmarks) {
             const childDiv = document.createElement('div');
