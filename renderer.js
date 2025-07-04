@@ -163,7 +163,7 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
             visualDiv.appendChild(icon);
 
             const childContainer = document.createElement('div');
-            childContainer.className = 'children-container';
+            childContainer.className = 'children-container hidden';
 
             visualDiv.addEventListener('click', () => {
               const hidden = childContainer.classList.toggle('hidden');
@@ -240,10 +240,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  chooseBtn.addEventListener('click', async () => {
-    const folderPath = await ipcRenderer.invoke('select-folder');
-    if (!folderPath) return;
-
+  async function loadProject(folderPath) {
     list.innerHTML = '';
     detailEl.innerHTML = '';
     selected.textContent = path.basename(folderPath);
@@ -299,7 +296,7 @@ window.addEventListener('DOMContentLoaded', () => {
         pageIcon.textContent = '▼';
 
         const pageChildrenBox = document.createElement('div');
-        pageChildrenBox.className = 'children-container';
+        pageChildrenBox.className = 'children-container hidden';
 
         for (const [groupName, bookmarks] of pageData.groups.entries()) {
           const groupContainer = document.createElement('div');
@@ -313,7 +310,7 @@ window.addEventListener('DOMContentLoaded', () => {
           groupIcon.textContent = '▼';
 
           const groupChildrenBox = document.createElement('div');
-          groupChildrenBox.className = 'children-container';
+          groupChildrenBox.className = 'children-container hidden';
 
           for (const info of bookmarks) {
             const childDiv = document.createElement('div');
@@ -367,5 +364,22 @@ window.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to read bookmarks.json:', e);
       list.textContent = 'Failed to load bookmarks';
     }
+  }
+
+  chooseBtn.addEventListener('click', async () => {
+    const folderPath = await ipcRenderer.invoke('select-folder');
+    if (!folderPath) return;
+    localStorage.setItem('lastFolderPath', folderPath);
+    await loadProject(folderPath);
   });
+
+  (async () => {
+    const last = localStorage.getItem('lastFolderPath');
+    if (last) {
+      try {
+        await fs.access(last);
+        await loadProject(last);
+      } catch {}
+    }
+  })();
 });
