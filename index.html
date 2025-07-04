@@ -145,6 +145,19 @@
       transform: scale(1.05);
     }
 
+    #toggle-all {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    #toggle-all:hover {
+      background: #e0e0e0;
+    }
+
     #selected-folder {
       font-weight: bold;
       color: #fff;
@@ -162,7 +175,10 @@
 
   <div class="main">
     <div class="column">
-      <h3>Bookmarks</h3>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <h3 style="margin:0;">Bookmarks</h3>
+        <button id="toggle-all">Collapse All</button>
+      </div>
       <div class="scroll-box">
         <ul id="bookmark-list"></ul>
       </div>

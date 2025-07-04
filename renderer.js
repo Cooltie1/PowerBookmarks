@@ -205,7 +205,30 @@ window.addEventListener('DOMContentLoaded', () => {
   const selected = document.getElementById('selected-folder');
   const list = document.getElementById('bookmark-list');
   const detailEl = document.getElementById('bookmark-details');
+  const toggleAllBtn = document.getElementById('toggle-all');
   let activeBookmarkEl = null;
+  let allCollapsed = false;
+
+  function setAllCollapsed(collapsed) {
+    const containers = document.querySelectorAll('.children-container');
+    containers.forEach(container => {
+      if (collapsed) {
+        container.classList.add('hidden');
+      } else {
+        container.classList.remove('hidden');
+      }
+      const icon = container.previousElementSibling?.querySelector('.toggle-icon');
+      if (icon) {
+        icon.textContent = collapsed ? '▼' : '▲';
+      }
+    });
+    toggleAllBtn.textContent = collapsed ? 'Expand All' : 'Collapse All';
+  }
+
+  toggleAllBtn.addEventListener('click', () => {
+    allCollapsed = !allCollapsed;
+    setAllCollapsed(allCollapsed);
+  });
 
   function setActive(el) {
     if (activeBookmarkEl) {
@@ -337,6 +360,9 @@ window.addEventListener('DOMContentLoaded', () => {
           pageIcon.textContent = hidden ? '▼' : '▲';
         });
       }
+
+      // Apply global collapse state to new elements
+      setAllCollapsed(allCollapsed);
     } catch (e) {
       console.error('Failed to read bookmarks.json:', e);
       list.textContent = 'Failed to load bookmarks';
