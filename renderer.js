@@ -213,15 +213,15 @@ window.addEventListener('DOMContentLoaded', () => {
   scrollBoxes.forEach(box => {
     let hideTimeout;
     const show = () => {
-      box.classList.remove('hide-scrollbar');
+      box.classList.add('show-scrollbar');
       clearTimeout(hideTimeout);
       hideTimeout = setTimeout(() => {
-        box.classList.add('hide-scrollbar');
+        box.classList.remove('show-scrollbar');
       }, 2000);
     };
-    box.classList.add('hide-scrollbar');
     box.addEventListener('scroll', show);
     box.addEventListener('mouseenter', show);
+    box.addEventListener('mouseleave', show);
   });
 
   function setAllCollapsed(collapsed) {

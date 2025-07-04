@@ -48,23 +48,34 @@
       flex: 1;
       padding-right: 10px;
       scrollbar-width: thin;
+      scrollbar-color: transparent transparent;
+      scrollbar-gutter: stable;
     }
 
     .scroll-box::-webkit-scrollbar {
       width: 8px;
+      background: transparent;
+    }
+
+    .scroll-box::-webkit-scrollbar-button {
+      display: none;
+      width: 0;
+      height: 0;
     }
 
     .scroll-box::-webkit-scrollbar-thumb {
-      background-color: rgba(155, 60, 243, 0.6);
+      background-color: #9B3CF3;
       border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
     }
 
-    .scroll-box.hide-scrollbar {
-      scrollbar-width: none;
+    .scroll-box.show-scrollbar {
+      scrollbar-color: #9B3CF3 transparent;
     }
 
-    .scroll-box.hide-scrollbar::-webkit-scrollbar {
-      display: none;
+    .scroll-box.show-scrollbar::-webkit-scrollbar-thumb {
+      opacity: 1;
     }
 
     #bookmark-list {
