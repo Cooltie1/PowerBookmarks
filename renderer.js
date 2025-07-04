@@ -206,8 +206,23 @@ window.addEventListener('DOMContentLoaded', () => {
   const list = document.getElementById('bookmark-list');
   const detailEl = document.getElementById('bookmark-details');
   const toggleAllBtn = document.getElementById('toggle-all');
+  const scrollBoxes = document.querySelectorAll('.scroll-box');
   let activeBookmarkEl = null;
   let allCollapsed = true;
+
+  scrollBoxes.forEach(box => {
+    let hideTimeout;
+    const show = () => {
+      box.classList.remove('hide-scrollbar');
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(() => {
+        box.classList.add('hide-scrollbar');
+      }, 2000);
+    };
+    box.classList.add('hide-scrollbar');
+    box.addEventListener('scroll', show);
+    box.addEventListener('mouseenter', show);
+  });
 
   function setAllCollapsed(collapsed) {
     const containers = document.querySelectorAll('.children-container');

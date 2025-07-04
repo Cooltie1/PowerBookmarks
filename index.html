@@ -47,6 +47,24 @@
       overflow-y: auto;
       flex: 1;
       padding-right: 10px;
+      scrollbar-width: thin;
+    }
+
+    .scroll-box::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .scroll-box::-webkit-scrollbar-thumb {
+      background-color: rgba(155, 60, 243, 0.6);
+      border-radius: 4px;
+    }
+
+    .scroll-box.hide-scrollbar {
+      scrollbar-width: none;
+    }
+
+    .scroll-box.hide-scrollbar::-webkit-scrollbar {
+      display: none;
     }
 
     #bookmark-list {
@@ -146,16 +164,19 @@
     }
 
     #toggle-all {
-      background: #f0f0f0;
-      border: 1px solid #ccc;
-      padding: 4px 8px;
-      border-radius: 4px;
+      background: linear-gradient(90deg, #F94D6A, #9B3CF3);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 20px;
       cursor: pointer;
-      transition: background 0.2s ease;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: background 0.2s ease, transform 0.2s ease;
     }
 
     #toggle-all:hover {
-      background: #e0e0e0;
+      transform: scale(1.05);
     }
 
     #selected-folder {
