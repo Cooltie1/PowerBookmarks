@@ -217,10 +217,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  chooseBtn.addEventListener('click', async () => {
-    const folderPath = await ipcRenderer.invoke('select-folder');
-    if (!folderPath) return;
-
+  async function loadProject(folderPath) {
     list.innerHTML = '';
     detailEl.innerHTML = '';
     selected.textContent = path.basename(folderPath);
@@ -341,5 +338,22 @@ window.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to read bookmarks.json:', e);
       list.textContent = 'Failed to load bookmarks';
     }
+  }
+
+  chooseBtn.addEventListener('click', async () => {
+    const folderPath = await ipcRenderer.invoke('select-folder');
+    if (!folderPath) return;
+    localStorage.setItem('lastFolderPath', folderPath);
+    await loadProject(folderPath);
   });
+
+  (async () => {
+    const last = localStorage.getItem('lastFolderPath');
+    if (last) {
+      try {
+        await fs.access(last);
+        await loadProject(last);
+      } catch {}
+    }
+  })();
 });
