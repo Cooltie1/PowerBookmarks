@@ -205,7 +205,33 @@ window.addEventListener('DOMContentLoaded', () => {
   const selected = document.getElementById('selected-folder');
   const list = document.getElementById('bookmark-list');
   const detailEl = document.getElementById('bookmark-details');
+  const toggleAllBtn = document.getElementById('toggle-all');
   let activeBookmarkEl = null;
+  let allCollapsed = true;
+
+  function setAllCollapsed(collapsed) {
+    const containers = document.querySelectorAll('.children-container');
+    containers.forEach(container => {
+      if (collapsed) {
+        container.classList.add('hidden');
+      } else {
+        container.classList.remove('hidden');
+      }
+      const icon = container.previousElementSibling?.querySelector('.toggle-icon');
+      if (icon) {
+        icon.textContent = collapsed ? '▼' : '▲';
+      }
+    });
+    toggleAllBtn.textContent = collapsed ? 'Expand All' : 'Collapse All';
+  }
+
+  // Initialize UI in collapsed state
+  setAllCollapsed(allCollapsed);
+
+  toggleAllBtn.addEventListener('click', () => {
+    allCollapsed = !allCollapsed;
+    setAllCollapsed(allCollapsed);
+  });
 
   function setActive(el) {
     if (activeBookmarkEl) {
@@ -226,6 +252,10 @@ window.addEventListener('DOMContentLoaded', () => {
     selected.textContent = path.basename(folderPath);
     setActive(null);
     chooseBtn.textContent = 'Change Project';
+
+    // Reset collapsed state for the new project
+    allCollapsed = true;
+    setAllCollapsed(allCollapsed);
 
     const bookmarksFile = await findBookmarksJson(folderPath);
     if (!bookmarksFile) {
@@ -337,6 +367,9 @@ window.addEventListener('DOMContentLoaded', () => {
           pageIcon.textContent = hidden ? '▼' : '▲';
         });
       }
+
+      // Apply global collapse state to new elements
+      setAllCollapsed(allCollapsed);
     } catch (e) {
       console.error('Failed to read bookmarks.json:', e);
       list.textContent = 'Failed to load bookmarks';
