@@ -146,6 +146,13 @@
       transform: scale(1.05);
     }
 
+    .bookmark-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 10px 0;
+    }
+
     #toggle-all {
       display: none;
       background: none;
@@ -179,7 +186,7 @@
 
   <div class="main">
     <div class="column">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div class="bookmark-header">
         <h3 style="margin:0;">Bookmarks</h3>
         <button id="toggle-all">Expand All</button>
       </div>
