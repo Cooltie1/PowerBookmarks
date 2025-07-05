@@ -2,6 +2,18 @@ const fs = require('fs').promises;
 const path = require('path');
 const { ipcRenderer } = require('electron');
 
+let activeVisualEl = null;
+
+function setActiveVisual(el) {
+  if (activeVisualEl) {
+    activeVisualEl.classList.remove('active');
+  }
+  activeVisualEl = el;
+  if (activeVisualEl) {
+    activeVisualEl.classList.add('active');
+  }
+}
+
 async function findBookmarksJson(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
@@ -62,6 +74,7 @@ async function getBookmarkInfo(bookmarkFolder, name) {
 async function showBookmarkDetails(metaContainer, container, bookmarkFolder, bookmarkName) {
   const filePath = path.join(bookmarkFolder, `${bookmarkName}.bookmark.json`);
   try {
+    setActiveVisual(null);
     const content = await fs.readFile(filePath, 'utf-8');
     const data = JSON.parse(content);
 
@@ -157,11 +170,11 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
 
         function renderVisualItem(visual, parentEl, depth = 0) {
           const visualDiv = document.createElement('div');
-          visualDiv.className = 'bookmark-item';
+          visualDiv.className = 'bookmark-item visual-item';
           visualDiv.style.marginLeft = `${depth * 20}px`;
 
           if (applyOnly && targetNames.has(visual.id)) {
-            visualDiv.classList.add('target-visual');
+            visualDiv.classList.add('target-visual', 'active');
           }
 
           const label = document.createElement('span');
@@ -179,7 +192,9 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
             const childContainer = document.createElement('div');
             childContainer.className = 'children-container hidden';
 
-            visualDiv.addEventListener('click', () => {
+            visualDiv.addEventListener('click', (e) => {
+              e.stopPropagation();
+              setActiveVisual(visualDiv);
               const hidden = childContainer.classList.toggle('hidden');
               icon.textContent = hidden ? '▼' : '▲';
             });
@@ -189,6 +204,11 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
             }
 
             parentEl.appendChild(childContainer);
+          } else {
+            visualDiv.addEventListener('click', (e) => {
+              e.stopPropagation();
+              setActiveVisual(visualDiv);
+            });
           }
 
           return visualDiv;
