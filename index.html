@@ -159,6 +159,11 @@
       margin: 0 0 10px 0;
     }
 
+    #bookmark-meta {
+      margin: 0 0 10px 0;
+      line-height: 1.4;
+    }
+
     #toggle-all {
       display: none;
       background: none;
@@ -172,6 +177,22 @@
     }
 
     #toggle-all:hover {
+      background: #f0f0f0;
+    }
+
+    #toggle-visuals {
+      display: none;
+      background: none;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 4px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      margin-right: 10px;
+      transition: background 0.2s ease;
+    }
+
+    #toggle-visuals:hover {
       background: #f0f0f0;
     }
 
@@ -201,7 +222,14 @@
       </div>
     </div>
     <div class="column">
-      <h3>Bookmark Details</h3>
+      <div class="bookmark-header">
+        <h3 style="margin:0;">Bookmark Details</h3>
+      </div>
+      <div id="bookmark-meta"></div>
+      <div class="bookmark-header">
+        <h3 style="margin:0;">Visuals (Grouped by parent)</h3>
+        <button id="toggle-visuals">Expand All</button>
+      </div>
       <div class="scroll-box">
         <div id="bookmark-details"></div>
       </div>
