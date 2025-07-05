@@ -70,6 +70,8 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
 
     const applyOnly = !!data.options?.applyOnlyToTargetVisuals;
     const suppress = !!data.options?.suppressActiveSection;
+    const suppressData = !!data.options?.suppressData;
+    const suppressDisplay = !!data.options?.suppressDisplay;
     const targetNames = new Set(
       Array.isArray(data.options?.targetVisualNames)
         ? data.options.targetVisualNames
@@ -199,7 +201,9 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
         container.innerHTML =
           `<strong>Page:</strong> ${sectionName}<br>` +
           `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
-          `<strong>Current Page:</strong> ${suppress}<br><br>` +
+          `<strong>Current Page:</strong> ${suppress}<br>` +
+          `<strong>Data:</strong> ${suppressData}<br>` +
+          `<strong>Display:</strong> ${suppressDisplay}<br><br>` +
           `<strong>Visuals (Grouped by parent):</strong><br>`;
         container.appendChild(visualContainer);
 
@@ -208,14 +212,18 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
         container.innerHTML =
           `<strong>Page:</strong> ${sectionName}<br>` +
           `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
-          `<strong>Current Page:</strong> ${suppress}<br><br>` +
+          `<strong>Current Page:</strong> ${suppress}<br>` +
+          `<strong>Data:</strong> ${suppressData}<br>` +
+          `<strong>Display:</strong> ${suppressDisplay}<br><br>` +
           `<em>Could not load visuals</em>`;
       }
     } else {
       container.innerHTML =
         `<strong>Page:</strong> Unknown<br>` +
         `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
-        `<strong>Current Page:</strong> ${suppress}<br><br>` +
+        `<strong>Current Page:</strong> ${suppress}<br>` +
+        `<strong>Data:</strong> ${suppressData}<br>` +
+        `<strong>Display:</strong> ${suppressDisplay}<br><br>` +
         `<em>No active section found</em>`;
     }
   } catch (e) {
