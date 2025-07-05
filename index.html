@@ -94,12 +94,25 @@
     .child-item:hover {
       background: #e0e0e0;
       border: 1px solid #e0e0e0;
-
-      
-      
     }
 
-    .bookmark-item.active,
+    .visual-item {
+      border-color: #fff;
+    }
+
+    .visual-item:hover {
+      border-color: #e0e0e0;
+    }
+
+    .visual-item.active {
+      border-color: #000;
+    }
+
+    .visual-item.active:hover {
+      border-color: #333;
+    }
+
+    .bookmark-item.active:not(.visual-item),
     .child-item.active {
       background: #F1E7FD !important;
       color: #9B3CF3;
@@ -109,7 +122,22 @@
     .target-visual {
       background: #E6F8E0 !important;
       color: #2E7D32;
-      border: none;
+      border: 1px solid #E6F8E0;
+      transition: background 0.2s ease, border 0.2s ease;
+    }
+
+    .target-visual:hover {
+      background: #D5EEC8 !important;
+      border-color: #D5EEC8;
+    }
+
+    .target-visual.active {
+      border-color: #2E7D32;
+    }
+
+    .target-visual.active:hover {
+      background: #C8E5BC !important;
+      border-color: #226E28;
     }
 
     .toggle-icon {
@@ -159,6 +187,11 @@
       margin: 0 0 10px 0;
     }
 
+    #bookmark-meta {
+      margin: 0 0 10px 0;
+      line-height: 1.4;
+    }
+
     #toggle-all {
       display: none;
       background: none;
@@ -172,6 +205,22 @@
     }
 
     #toggle-all:hover {
+      background: #f0f0f0;
+    }
+
+    #toggle-visuals {
+      display: none;
+      background: none;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 4px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      margin-right: 10px;
+      transition: background 0.2s ease;
+    }
+
+    #toggle-visuals:hover {
       background: #f0f0f0;
     }
 
@@ -201,7 +250,14 @@
       </div>
     </div>
     <div class="column">
-      <h3>Bookmark Details</h3>
+      <div class="bookmark-header">
+        <h3 style="margin:0;">Bookmark Details</h3>
+      </div>
+      <div id="bookmark-meta"></div>
+      <div class="bookmark-header">
+        <h3 style="margin:0;">Visuals</h3>
+        <button id="toggle-visuals">Expand All</button>
+      </div>
       <div class="scroll-box">
         <div id="bookmark-details"></div>
       </div>

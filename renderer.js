@@ -2,6 +2,18 @@ const fs = require('fs').promises;
 const path = require('path');
 const { ipcRenderer } = require('electron');
 
+let activeVisualEl = null;
+
+function setActiveVisual(el) {
+  if (activeVisualEl) {
+    activeVisualEl.classList.remove('active');
+  }
+  activeVisualEl = el;
+  if (activeVisualEl) {
+    activeVisualEl.classList.add('active');
+  }
+}
+
 async function findBookmarksJson(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
@@ -59,9 +71,10 @@ async function getBookmarkInfo(bookmarkFolder, name) {
   }
 }
 
-async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
+async function showBookmarkDetails(metaContainer, container, bookmarkFolder, bookmarkName) {
   const filePath = path.join(bookmarkFolder, `${bookmarkName}.bookmark.json`);
   try {
+    setActiveVisual(null);
     const content = await fs.readFile(filePath, 'utf-8');
     const data = JSON.parse(content);
 
@@ -157,7 +170,7 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
 
         function renderVisualItem(visual, parentEl, depth = 0) {
           const visualDiv = document.createElement('div');
-          visualDiv.className = 'bookmark-item';
+          visualDiv.className = 'bookmark-item visual-item';
           visualDiv.style.marginLeft = `${depth * 20}px`;
 
           if (applyOnly && targetNames.has(visual.id)) {
@@ -179,7 +192,9 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
             const childContainer = document.createElement('div');
             childContainer.className = 'children-container hidden';
 
-            visualDiv.addEventListener('click', () => {
+            visualDiv.addEventListener('click', (e) => {
+              e.stopPropagation();
+              setActiveVisual(visualDiv);
               const hidden = childContainer.classList.toggle('hidden');
               icon.textContent = hidden ? '▼' : '▲';
             });
@@ -189,6 +204,11 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
             }
 
             parentEl.appendChild(childContainer);
+          } else {
+            visualDiv.addEventListener('click', (e) => {
+              e.stopPropagation();
+              setActiveVisual(visualDiv);
+            });
           }
 
           return visualDiv;
@@ -198,35 +218,37 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
           renderVisualItem(root, visualContainer, 0);
         }
 
-        container.innerHTML =
+        metaContainer.innerHTML =
           `<strong>Page:</strong> ${sectionName}<br>` +
           `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
           `<strong>Current Page:</strong> ${suppress}<br>` +
           `<strong>Data:</strong> ${suppressData}<br>` +
-          `<strong>Display:</strong> ${suppressDisplay}<br><br>` +
-          `<strong>Visuals (Grouped by parent):</strong><br>`;
+          `<strong>Display:</strong> ${suppressDisplay}`;
+
+        container.innerHTML = '';
         container.appendChild(visualContainer);
 
       } catch (e) {
         console.warn(`Failed to read visuals folder:`, e.message);
-        container.innerHTML =
+        metaContainer.innerHTML =
           `<strong>Page:</strong> ${sectionName}<br>` +
           `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
           `<strong>Current Page:</strong> ${suppress}<br>` +
           `<strong>Data:</strong> ${suppressData}<br>` +
-          `<strong>Display:</strong> ${suppressDisplay}<br><br>` +
-          `<em>Could not load visuals</em>`;
+          `<strong>Display:</strong> ${suppressDisplay}`;
+        container.innerHTML = `<em>Could not load visuals</em>`;
       }
     } else {
-      container.innerHTML =
+      metaContainer.innerHTML =
         `<strong>Page:</strong> Unknown<br>` +
         `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
         `<strong>Current Page:</strong> ${suppress}<br>` +
         `<strong>Data:</strong> ${suppressData}<br>` +
-        `<strong>Display:</strong> ${suppressDisplay}<br><br>` +
-        `<em>No active section found</em>`;
+        `<strong>Display:</strong> ${suppressDisplay}`;
+      container.innerHTML = `<em>No active section found</em>`;
     }
   } catch (e) {
+    metaContainer.innerHTML = '';
     container.innerHTML = `<em>Could not load details for bookmark "${bookmarkName}"</em>`;
     console.warn(`Failed to load bookmark ${bookmarkName}:`, e.message);
   }
@@ -237,12 +259,15 @@ window.addEventListener('DOMContentLoaded', () => {
   const selected = document.getElementById('selected-folder');
   const list = document.getElementById('bookmark-list');
   const detailEl = document.getElementById('bookmark-details');
+  const metaEl = document.getElementById('bookmark-meta');
   const toggleAllBtn = document.getElementById('toggle-all');
+  const toggleVisualsBtn = document.getElementById('toggle-visuals');
   let activeBookmarkEl = null;
   let allCollapsed = true;
+  let visualsCollapsed = true;
 
   function setAllCollapsed(collapsed) {
-    const containers = document.querySelectorAll('.children-container');
+    const containers = document.querySelectorAll('#bookmark-list .children-container');
     containers.forEach(container => {
       if (collapsed) {
         container.classList.add('hidden');
@@ -257,12 +282,34 @@ window.addEventListener('DOMContentLoaded', () => {
     toggleAllBtn.textContent = collapsed ? 'Expand All' : 'Collapse All';
   }
 
+  function setVisualsCollapsed(collapsed) {
+    const containers = document.querySelectorAll('#bookmark-details .children-container');
+    containers.forEach(container => {
+      if (collapsed) {
+        container.classList.add('hidden');
+      } else {
+        container.classList.remove('hidden');
+      }
+      const icon = container.previousElementSibling?.querySelector('.toggle-icon');
+      if (icon) {
+        icon.textContent = collapsed ? '▼' : '▲';
+      }
+    });
+    toggleVisualsBtn.textContent = collapsed ? 'Expand All' : 'Collapse All';
+  }
+
   // Initialize UI in collapsed state
   setAllCollapsed(allCollapsed);
+  setVisualsCollapsed(visualsCollapsed);
 
   toggleAllBtn.addEventListener('click', () => {
     allCollapsed = !allCollapsed;
     setAllCollapsed(allCollapsed);
+  });
+
+  toggleVisualsBtn.addEventListener('click', () => {
+    visualsCollapsed = !visualsCollapsed;
+    setVisualsCollapsed(visualsCollapsed);
   });
 
   function setActive(el) {
@@ -278,6 +325,9 @@ window.addEventListener('DOMContentLoaded', () => {
   async function loadProject(folderPath) {
     list.innerHTML = '';
     detailEl.innerHTML = '';
+    metaEl.innerHTML = '';
+    toggleVisualsBtn.style.display = 'none';
+    visualsCollapsed = true;
     selected.textContent = path.basename(folderPath);
     setActive(null);
     chooseBtn.textContent = 'Change Project';
@@ -358,10 +408,13 @@ window.addEventListener('DOMContentLoaded', () => {
             const childDiv = document.createElement('div');
             childDiv.className = 'child-item';
             childDiv.textContent = `\uD83D\uDD16 ${info.displayName}`; // 🔖 icon
-            childDiv.addEventListener('click', (e) => {
+            childDiv.addEventListener('click', async (e) => {
               e.stopPropagation();
               setActive(childDiv);
-              showBookmarkDetails(detailEl, bookmarkFolder, info.name);
+              await showBookmarkDetails(metaEl, detailEl, bookmarkFolder, info.name);
+              visualsCollapsed = true;
+              setVisualsCollapsed(visualsCollapsed);
+              toggleVisualsBtn.style.display = 'inline-block';
             });
             groupChildrenBox.appendChild(childDiv);
           }
@@ -381,10 +434,13 @@ window.addEventListener('DOMContentLoaded', () => {
           const bookmarkDiv = document.createElement('div');
           bookmarkDiv.className = 'bookmark-item';
           bookmarkDiv.textContent = `\uD83D\uDD16 ${info.displayName}`; // 🔖 icon
-          bookmarkDiv.addEventListener('click', (e) => {
+          bookmarkDiv.addEventListener('click', async (e) => {
             e.stopPropagation();
             setActive(bookmarkDiv);
-            showBookmarkDetails(detailEl, bookmarkFolder, info.name);
+            await showBookmarkDetails(metaEl, detailEl, bookmarkFolder, info.name);
+            visualsCollapsed = true;
+            setVisualsCollapsed(visualsCollapsed);
+            toggleVisualsBtn.style.display = 'inline-block';
           });
           pageChildrenBox.appendChild(bookmarkDiv);
         }
