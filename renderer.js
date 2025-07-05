@@ -174,7 +174,7 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
           visualDiv.style.marginLeft = `${depth * 20}px`;
 
           if (applyOnly && targetNames.has(visual.id)) {
-            visualDiv.classList.add('target-visual', 'active');
+            visualDiv.classList.add('target-visual');
           }
 
           const label = document.createElement('span');
