@@ -269,14 +269,19 @@ window.addEventListener('DOMContentLoaded', () => {
   function setAllCollapsed(collapsed) {
     const containers = document.querySelectorAll('#bookmark-list .children-container');
     containers.forEach(container => {
-      if (collapsed) {
+      let shouldCollapse = collapsed;
+      if (collapsed && activeBookmarkEl && container.contains(activeBookmarkEl)) {
+        shouldCollapse = false;
+      }
+
+      if (shouldCollapse) {
         container.classList.add('hidden');
       } else {
         container.classList.remove('hidden');
       }
       const icon = container.previousElementSibling?.querySelector('.toggle-icon');
       if (icon) {
-        icon.textContent = collapsed ? '▼' : '▲';
+        icon.textContent = shouldCollapse ? '▼' : '▲';
       }
     });
     toggleAllBtn.textContent = collapsed ? 'Expand All' : 'Collapse All';
@@ -410,6 +415,13 @@ window.addEventListener('DOMContentLoaded', () => {
             childDiv.textContent = `\uD83D\uDD16 ${info.displayName}`; // 🔖 icon
             childDiv.addEventListener('click', async (e) => {
               e.stopPropagation();
+              if (activeBookmarkEl === childDiv) {
+                setActive(null);
+                metaEl.innerHTML = '';
+                detailEl.innerHTML = '';
+                toggleVisualsBtn.style.display = 'none';
+                return;
+              }
               setActive(childDiv);
               await showBookmarkDetails(metaEl, detailEl, bookmarkFolder, info.name);
               visualsCollapsed = true;
@@ -425,6 +437,9 @@ window.addEventListener('DOMContentLoaded', () => {
           pageChildrenBox.appendChild(groupChildrenBox);
 
           groupContainer.addEventListener('click', () => {
+            const isActiveInside = activeBookmarkEl && groupChildrenBox.contains(activeBookmarkEl);
+            const currentlyHidden = groupChildrenBox.classList.contains('hidden');
+            if (isActiveInside && !currentlyHidden) return;
             const hidden = groupChildrenBox.classList.toggle('hidden');
             groupIcon.textContent = hidden ? '▼' : '▲';
           });
@@ -436,6 +451,13 @@ window.addEventListener('DOMContentLoaded', () => {
           bookmarkDiv.textContent = `\uD83D\uDD16 ${info.displayName}`; // 🔖 icon
           bookmarkDiv.addEventListener('click', async (e) => {
             e.stopPropagation();
+            if (activeBookmarkEl === bookmarkDiv) {
+              setActive(null);
+              metaEl.innerHTML = '';
+              detailEl.innerHTML = '';
+              toggleVisualsBtn.style.display = 'none';
+              return;
+            }
             setActive(bookmarkDiv);
             await showBookmarkDetails(metaEl, detailEl, bookmarkFolder, info.name);
             visualsCollapsed = true;
@@ -451,6 +473,9 @@ window.addEventListener('DOMContentLoaded', () => {
         list.appendChild(pageChildrenBox);
 
         pageContainer.addEventListener('click', () => {
+          const isActiveInside = activeBookmarkEl && pageChildrenBox.contains(activeBookmarkEl);
+          const currentlyHidden = pageChildrenBox.classList.contains('hidden');
+          if (isActiveInside && !currentlyHidden) return;
           const hidden = pageChildrenBox.classList.toggle('hidden');
           pageIcon.textContent = hidden ? '▼' : '▲';
         });
