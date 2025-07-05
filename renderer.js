@@ -71,7 +71,7 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
     const applyOnly = !!data.options?.applyOnlyToTargetVisuals;
     const suppress = !!data.options?.suppressActiveSection;
     const suppressData = !!data.options?.suppressData;
-    const suppressDisplay = !!data.options?.supressDisplay;
+    const suppressDisplay = !!data.options?.suppressDisplay;
     const targetNames = new Set(
       Array.isArray(data.options?.targetVisualNames)
         ? data.options.targetVisualNames
