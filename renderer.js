@@ -70,6 +70,11 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
 
     const applyOnly = !!data.options?.applyOnlyToTargetVisuals;
     const suppress = !!data.options?.suppressActiveSection;
+    const targetNames = new Set(
+      Array.isArray(data.options?.targetVisualNames)
+        ? data.options.targetVisualNames
+        : []
+    );
 
     if (sectionId) {
       const definitionFolder = path.dirname(bookmarkFolder);
@@ -152,6 +157,10 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
           const visualDiv = document.createElement('div');
           visualDiv.className = 'bookmark-item';
           visualDiv.style.marginLeft = `${depth * 20}px`;
+
+          if (applyOnly && targetNames.has(visual.id)) {
+            visualDiv.classList.add('target-visual');
+          }
 
           const label = document.createElement('span');
           label.textContent = visual.name;
