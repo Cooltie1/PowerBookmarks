@@ -250,6 +250,9 @@ window.addEventListener('DOMContentLoaded', () => {
     setActive(null);
     chooseBtn.textContent = 'Change Project';
 
+    // Show the expand/collapse button now that a project is loaded
+    toggleAllBtn.style.display = 'inline-block';
+
     // Reset collapsed state for the new project
     allCollapsed = true;
     setAllCollapsed(allCollapsed);
