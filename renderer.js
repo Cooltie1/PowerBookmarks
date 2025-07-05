@@ -68,6 +68,9 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
     const sectionId = data.explorationState?.activeSection;
     let sectionName = 'Unknown';
 
+    const applyOnly = !!data.options?.applyOnlyToTargetVisuals;
+    const suppress = !!data.options?.suppressActiveSection;
+
     if (sectionId) {
       const definitionFolder = path.dirname(bookmarkFolder);
       const pageFolder = path.join(definitionFolder, 'pages', sectionId);
@@ -184,15 +187,27 @@ async function showBookmarkDetails(container, bookmarkFolder, bookmarkName) {
           renderVisualItem(root, visualContainer, 0);
         }
 
-        container.innerHTML = `<strong>Page:</strong> ${sectionName}<br><br><strong>Visuals (Grouped by parent):</strong><br>`;
+        container.innerHTML =
+          `<strong>Page:</strong> ${sectionName}<br>` +
+          `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
+          `<strong>Current Page:</strong> ${suppress}<br><br>` +
+          `<strong>Visuals (Grouped by parent):</strong><br>`;
         container.appendChild(visualContainer);
 
       } catch (e) {
         console.warn(`Failed to read visuals folder:`, e.message);
-        container.innerHTML = `<strong>Page:</strong> ${sectionName}<br><br><em>Could not load visuals</em>`;
+        container.innerHTML =
+          `<strong>Page:</strong> ${sectionName}<br>` +
+          `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
+          `<strong>Current Page:</strong> ${suppress}<br><br>` +
+          `<em>Could not load visuals</em>`;
       }
     } else {
-      container.innerHTML = `<strong>Page:</strong> Unknown<br><br><em>No active section found</em>`;
+      container.innerHTML =
+        `<strong>Page:</strong> Unknown<br>` +
+        `<strong>Selected Visuals:</strong> ${applyOnly}<br>` +
+        `<strong>Current Page:</strong> ${suppress}<br><br>` +
+        `<em>No active section found</em>`;
     }
   } catch (e) {
     container.innerHTML = `<em>Could not load details for bookmark "${bookmarkName}"</em>`;
