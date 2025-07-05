@@ -99,7 +99,7 @@
       
     }
 
-    .bookmark-item.active,
+    .bookmark-item.active:not(.visual-item),
     .child-item.active {
       background: #F1E7FD !important;
       color: #9B3CF3;
@@ -109,7 +109,22 @@
     .target-visual {
       background: #E6F8E0 !important;
       color: #2E7D32;
-      border: none;
+      border: 1px solid #E6F8E0;
+      transition: background 0.2s ease, border 0.2s ease;
+    }
+
+    .target-visual:hover {
+      background: #D5EEC8 !important;
+      border-color: #D5EEC8;
+    }
+
+    .target-visual.active {
+      border-color: #2E7D32;
+    }
+
+    .target-visual.active:hover {
+      background: #C8E5BC !important;
+      border-color: #226E28;
     }
 
     .toggle-icon {
