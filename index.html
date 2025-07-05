@@ -131,31 +131,42 @@
     }
 
     #choose-folder {
-      background: #9B3CF3;
+      background: linear-gradient(90deg, #F94D6A, #9B3CF3);
       color: #fff;
       border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
+      padding: 6px 12px;
+      border-radius: 20px;
       cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       transition: background 0.2s ease, transform 0.2s ease;
     }
 
     #choose-folder:hover {
-      background: #7a2ddc;
       transform: scale(1.05);
     }
 
+    .bookmark-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 10px 0;
+    }
+
     #toggle-all {
-      background: #f0f0f0;
+      display: none;
+      background: none;
+      color: #333;
       border: 1px solid #ccc;
-      padding: 4px 8px;
-      border-radius: 4px;
+      padding: 4px 12px;
+      border-radius: 20px;
       cursor: pointer;
+      margin-right: 10px;
       transition: background 0.2s ease;
     }
 
     #toggle-all:hover {
-      background: #e0e0e0;
+      background: #f0f0f0;
     }
 
     #selected-folder {
@@ -175,7 +186,7 @@
 
   <div class="main">
     <div class="column">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div class="bookmark-header">
         <h3 style="margin:0;">Bookmarks</h3>
         <button id="toggle-all">Expand All</button>
       </div>
