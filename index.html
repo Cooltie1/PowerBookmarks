@@ -47,35 +47,6 @@
       overflow-y: auto;
       flex: 1;
       padding-right: 10px;
-      scrollbar-width: thin;
-      scrollbar-color: transparent transparent;
-      scrollbar-gutter: stable;
-    }
-
-    .scroll-box::-webkit-scrollbar {
-      width: 8px;
-      background: transparent;
-    }
-
-    .scroll-box::-webkit-scrollbar-button {
-      display: none;
-      width: 0;
-      height: 0;
-    }
-
-    .scroll-box::-webkit-scrollbar-thumb {
-      background-color: #9B3CF3;
-      border-radius: 4px;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    .scroll-box.show-scrollbar {
-      scrollbar-color: #9B3CF3 transparent;
-    }
-
-    .scroll-box.show-scrollbar::-webkit-scrollbar-thumb {
-      opacity: 1;
     }
 
     #bookmark-list {
@@ -160,21 +131,6 @@
     }
 
     #choose-folder {
-      background: #9B3CF3;
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
-
-    #choose-folder:hover {
-      background: #7a2ddc;
-      transform: scale(1.05);
-    }
-
-    #toggle-all {
       background: linear-gradient(90deg, #F94D6A, #9B3CF3);
       color: #fff;
       border: none;
@@ -186,7 +142,22 @@
       transition: background 0.2s ease, transform 0.2s ease;
     }
 
+    #choose-folder:hover {
+      transform: scale(1.05);
+    }
+
+    #toggle-all {
+      background: #9B3CF3;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
     #toggle-all:hover {
+      background: #7a2ddc;
       transform: scale(1.05);
     }
 
