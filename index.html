@@ -39,6 +39,28 @@
       overflow: hidden;
     }
 
+    #bookmark-column {
+      width: 220px;
+      flex: none;
+      min-width: 150px;
+      max-width: 600px;
+      position: relative;
+    }
+
+    #bookmark-resizer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 5px;
+      cursor: ew-resize;
+      background: #ddd;
+    }
+
+    #visual-column {
+      display: none;
+    }
+
     .column h3 {
       margin: 0 0 10px 0;
     }
@@ -240,7 +262,7 @@
   </div>
 
   <div class="main">
-    <div class="column">
+    <div class="column" id="bookmark-column">
       <div class="bookmark-header">
         <h3 style="margin:0;">Bookmarks</h3>
         <button id="toggle-all">Expand All</button>
@@ -248,8 +270,9 @@
       <div class="scroll-box">
         <ul id="bookmark-list"></ul>
       </div>
+      <div id="bookmark-resizer"></div>
     </div>
-    <div class="column">
+    <div class="column" id="details-column">
       <div class="bookmark-header">
         <h3 style="margin:0;">Bookmark Details</h3>
       </div>
@@ -260,6 +283,14 @@
       </div>
       <div class="scroll-box">
         <div id="bookmark-details"></div>
+      </div>
+    </div>
+    <div class="column" id="visual-column">
+      <div class="bookmark-header">
+        <h3 style="margin:0;">Visual Details</h3>
+      </div>
+      <div class="scroll-box">
+        <div id="visual-details"></div>
       </div>
     </div>
   </div>
