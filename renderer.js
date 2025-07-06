@@ -3,6 +3,9 @@ const path = require('path');
 const { ipcRenderer } = require('electron');
 
 let activeVisualEl = null;
+let visualColumn = null;
+let visualDetailsEl = null;
+const visualInfoMap = new WeakMap();
 
 function setActiveVisual(el) {
   if (activeVisualEl) {
@@ -11,6 +14,19 @@ function setActiveVisual(el) {
   activeVisualEl = el;
   if (activeVisualEl) {
     activeVisualEl.classList.add('active');
+    if (visualColumn && visualDetailsEl) {
+      visualColumn.style.display = 'flex';
+      const info = visualInfoMap.get(activeVisualEl);
+      if (info) {
+        visualDetailsEl.textContent = JSON.stringify(info.data, null, 2);
+      } else {
+        visualDetailsEl.textContent = '';
+      }
+    }
+  }
+  if (!activeVisualEl && visualColumn && visualDetailsEl) {
+    visualColumn.style.display = 'none';
+    visualDetailsEl.textContent = '';
   }
 }
 
@@ -139,12 +155,13 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
 
             console.log(displayName); // should output: Title on visual but not turned on
 
-            visualMap.set(folderName, {
-              id: folderName,
-              name: displayName || visualData.name || folderName,
-              parent: visualData.parentGroupName || null,
-              children: []
-            });
+              visualMap.set(folderName, {
+                id: folderName,
+                name: displayName || visualData.name || folderName,
+                parent: visualData.parentGroupName || null,
+                children: [],
+                data: visualData
+              });
           } catch (e) {
             console.warn(`Failed to load visual: ${folderName}`, e.message);
           }
@@ -172,6 +189,7 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
           const visualDiv = document.createElement('div');
           visualDiv.className = 'bookmark-item visual-item';
           visualDiv.style.marginLeft = `${depth * 20}px`;
+          visualInfoMap.set(visualDiv, visual);
 
           if (applyOnly && targetNames.has(visual.id)) {
             visualDiv.classList.add('target-visual');
@@ -194,7 +212,11 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
 
             visualDiv.addEventListener('click', (e) => {
               e.stopPropagation();
-              setActiveVisual(visualDiv);
+              if (activeVisualEl === visualDiv) {
+                setActiveVisual(null);
+              } else {
+                setActiveVisual(visualDiv);
+              }
               const hidden = childContainer.classList.toggle('hidden');
               icon.textContent = hidden ? '▼' : '▲';
             });
@@ -207,7 +229,11 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
           } else {
             visualDiv.addEventListener('click', (e) => {
               e.stopPropagation();
-              setActiveVisual(visualDiv);
+              if (activeVisualEl === visualDiv) {
+                setActiveVisual(null);
+              } else {
+                setActiveVisual(visualDiv);
+              }
             });
           }
 
@@ -260,6 +286,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const list = document.getElementById('bookmark-list');
   const detailEl = document.getElementById('bookmark-details');
   const metaEl = document.getElementById('bookmark-meta');
+  visualColumn = document.getElementById('visual-column');
+  visualDetailsEl = document.getElementById('visual-details');
+  const bookmarkColumn = document.getElementById('bookmark-column');
+  const bookmarkResizer = document.getElementById('bookmark-resizer');
   const toggleAllBtn = document.getElementById('toggle-all');
   const toggleVisualsBtn = document.getElementById('toggle-visuals');
   let activeBookmarkEl = null;
@@ -315,6 +345,23 @@ window.addEventListener('DOMContentLoaded', () => {
   toggleVisualsBtn.addEventListener('click', () => {
     visualsCollapsed = !visualsCollapsed;
     setVisualsCollapsed(visualsCollapsed);
+  });
+
+  let resizing = false;
+  bookmarkResizer.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    resizing = true;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!resizing) return;
+    const rect = bookmarkColumn.getBoundingClientRect();
+    const newWidth = e.clientX - rect.left;
+    bookmarkColumn.style.width = Math.min(Math.max(newWidth, 150), 600) + 'px';
+  });
+
+  window.addEventListener('mouseup', () => {
+    resizing = false;
   });
 
   function setActive(el) {
