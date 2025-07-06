@@ -212,7 +212,11 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
 
             visualDiv.addEventListener('click', (e) => {
               e.stopPropagation();
-              setActiveVisual(visualDiv);
+              if (activeVisualEl === visualDiv) {
+                setActiveVisual(null);
+              } else {
+                setActiveVisual(visualDiv);
+              }
               const hidden = childContainer.classList.toggle('hidden');
               icon.textContent = hidden ? '▼' : '▲';
             });
@@ -225,7 +229,11 @@ async function showBookmarkDetails(metaContainer, container, bookmarkFolder, boo
           } else {
             visualDiv.addEventListener('click', (e) => {
               e.stopPropagation();
-              setActiveVisual(visualDiv);
+              if (activeVisualEl === visualDiv) {
+                setActiveVisual(null);
+              } else {
+                setActiveVisual(visualDiv);
+              }
             });
           }
 
