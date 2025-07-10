@@ -7,6 +7,21 @@ let visualColumn = null;
 let visualDetailsEl = null;
 const visualInfoMap = new WeakMap();
 
+function collectFields(obj, out) {
+  if (!obj || typeof obj !== 'object') return;
+  if (Object.prototype.hasOwnProperty.call(obj, 'Property') &&
+      typeof obj.Property === 'string') {
+    out.add(obj.Property);
+  }
+  for (const value of Object.values(obj)) {
+    if (Array.isArray(value)) {
+      for (const v of value) collectFields(v, out);
+    } else if (value && typeof value === 'object') {
+      collectFields(value, out);
+    }
+  }
+}
+
 function setActiveVisual(el) {
   if (activeVisualEl) {
     activeVisualEl.classList.remove('active');
@@ -18,7 +33,18 @@ function setActiveVisual(el) {
       visualColumn.style.display = 'flex';
       const info = visualInfoMap.get(activeVisualEl);
       if (info) {
-        visualDetailsEl.textContent = JSON.stringify(info.data, null, 2);
+        const type =
+          info.data?.visual?.visualType ||
+          info.data?.singleVisual?.visualType ||
+          'Unknown';
+        const fieldsSet = new Set();
+        collectFields(info.data, fieldsSet);
+        const fields = Array.from(fieldsSet).sort();
+        const list = fields.map(f => `<li>${f}</li>`).join('');
+        visualDetailsEl.innerHTML =
+          `<strong>Type:</strong> ${type}<br>` +
+          `<strong>Fields:</strong> ` +
+          (list ? `<ul>${list}</ul>` : 'None');
       } else {
         visualDetailsEl.textContent = '';
       }
