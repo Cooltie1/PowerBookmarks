@@ -23,6 +23,28 @@ function collectFields(obj, out) {
   }
 }
 
+function collectFieldsByBucket(data) {
+  const result = {};
+  const queryState =
+    data?.visual?.query?.queryState || data?.singleVisual?.query?.queryState;
+  if (!queryState || typeof queryState !== 'object') return result;
+
+  for (const [bucket, obj] of Object.entries(queryState)) {
+    const fields = new Set();
+    const projections = Array.isArray(obj?.projections) ? obj.projections : [];
+    for (const proj of projections) {
+      if (typeof proj.queryRef === 'string') {
+        fields.add(proj.queryRef);
+      }
+    }
+    if (fields.size > 0) {
+      result[bucket] = Array.from(fields).sort();
+    }
+  }
+
+  return result;
+}
+
 function setActiveVisual(el) {
   if (activeVisualEl) {
     activeVisualEl.classList.remove('active');
@@ -38,14 +60,30 @@ function setActiveVisual(el) {
           info.data?.visual?.visualType ||
           info.data?.singleVisual?.visualType ||
           'Unknown';
-        const fieldsSet = new Set();
-        collectFields(info.data, fieldsSet);
-        const fields = Array.from(fieldsSet).sort();
-        const list = fields.map(f => `<li>${f}</li>`).join('');
+
+        const buckets = collectFieldsByBucket(info.data);
+        let fieldsHtml = '';
+
+        if (Object.keys(buckets).length > 0) {
+          const bucketItems = Object.entries(buckets)
+            .map(([bucket, fields]) => {
+              const list = fields.map(f => `<li>${f}</li>`).join('');
+              return `<li><strong>${bucket}:</strong> <ul>${list}</ul></li>`;
+            })
+            .join('');
+          fieldsHtml = `<ul>${bucketItems}</ul>`;
+        } else {
+          const fieldsSet = new Set();
+          collectFields(info.data, fieldsSet);
+          const fields = Array.from(fieldsSet).sort();
+          fieldsHtml = fields.length
+            ? `<ul>${fields.map(f => `<li>${f}</li>`).join('')}</ul>`
+            : 'None';
+        }
+
         visualDetailsEl.innerHTML =
           `<strong>Type:</strong> ${type}<br>` +
-          `<strong>Fields:</strong> ` +
-          (list ? `<ul>${list}</ul>` : 'None');
+          `<strong>Fields:</strong> ${fieldsHtml}`;
       } else {
         visualDetailsEl.textContent = '';
       }
