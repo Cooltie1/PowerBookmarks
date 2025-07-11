@@ -9,10 +9,11 @@ const visualInfoMap = new WeakMap();
 
 function collectFields(obj, out) {
   if (!obj || typeof obj !== 'object') return;
-  if (Object.prototype.hasOwnProperty.call(obj, 'Property') &&
-      typeof obj.Property === 'string') {
-    out.add(obj.Property);
+
+  if (typeof obj.queryRef === 'string') {
+    out.add(obj.queryRef);
   }
+
   for (const value of Object.values(obj)) {
     if (Array.isArray(value)) {
       for (const v of value) collectFields(v, out);
