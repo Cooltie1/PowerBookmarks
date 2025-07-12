@@ -7,6 +7,87 @@ let visualColumn = null;
 let visualDetailsEl = null;
 const visualInfoMap = new WeakMap();
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function parseField(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+
+  // Prefer queryRef for display, fall back to nativeQueryRef
+  const name = typeof obj.nativeQueryRef === 'string' ? obj.nativeQueryRef : obj.queryRef;
+  if (typeof name !== 'string') return null;
+
+  let entity;
+  let property;
+  if (obj.field?.Column) {
+    entity = obj.field.Column.Expression?.SourceRef?.Entity;
+    property = obj.field.Column.Property;
+  } else if (obj.field?.Measure) {
+    entity = obj.field.Measure.Expression?.SourceRef?.Entity;
+    property = obj.field.Measure.Property;
+  } else if (obj.field?.Hierarchy) {
+    entity = obj.field.Hierarchy.Expression?.SourceRef?.Entity;
+    property = obj.field.Hierarchy.Hierarchy;
+  }
+
+  const label = obj.label || property;
+  const tooltipParts = [];
+  if (entity) tooltipParts.push(entity);
+  if (label) tooltipParts.push(label);
+  const tooltip = tooltipParts.join('.') || name;
+
+  return { name, tooltip };
+}
+
+function collectFields(obj, map) {
+  if (!obj || typeof obj !== 'object') return;
+
+  const info = parseField(obj);
+  if (info && !map.has(info.name)) {
+    map.set(info.name, info.tooltip);
+  }
+
+  for (const value of Object.values(obj)) {
+    if (Array.isArray(value)) {
+      for (const v of value) collectFields(v, map);
+    } else if (value && typeof value === 'object') {
+      collectFields(value, map);
+    }
+  }
+}
+
+function collectFieldsByBucket(data) {
+  const result = {};
+  const queryState =
+    data?.visual?.query?.queryState || data?.singleVisual?.query?.queryState;
+  if (!queryState || typeof queryState !== 'object') return result;
+
+  for (const [bucket, obj] of Object.entries(queryState)) {
+    const map = new Map();
+    const projections = Array.isArray(obj?.projections) ? obj.projections : [];
+    for (const proj of projections) {
+      const info = parseField(proj);
+      if (info && !map.has(info.name)) {
+        map.set(info.name, info.tooltip);
+      }
+    }
+    if (map.size > 0) {
+      const arr = Array.from(map.entries())
+        .map(([name, tooltip]) => ({ name, tooltip }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      result[bucket] = arr;
+    }
+  }
+
+  return result;
+}
+
 function setActiveVisual(el) {
   if (activeVisualEl) {
     activeVisualEl.classList.remove('active');
@@ -18,7 +99,40 @@ function setActiveVisual(el) {
       visualColumn.style.display = 'flex';
       const info = visualInfoMap.get(activeVisualEl);
       if (info) {
-        visualDetailsEl.textContent = JSON.stringify(info.data, null, 2);
+        const type =
+          info.data?.visual?.visualType ||
+          info.data?.singleVisual?.visualType ||
+          'Unknown';
+
+        const buckets = collectFieldsByBucket(info.data);
+        let fieldsHtml = '';
+
+        if (Object.keys(buckets).length > 0) {
+          const bucketItems = Object.entries(buckets)
+            .map(([bucket, fields]) => {
+              const list = fields
+                .map(f => `<li title="${escapeHtml(f.tooltip)}">${escapeHtml(f.name)}</li>`)
+                .join('');
+              return `<li><strong>${bucket}:</strong> <ul>${list}</ul></li>`;
+            })
+            .join('');
+          fieldsHtml = `<ul>${bucketItems}</ul>`;
+        } else {
+          const fieldMap = new Map();
+          collectFields(info.data, fieldMap);
+          const fields = Array.from(fieldMap.entries())
+            .map(([name, tooltip]) => ({ name, tooltip }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+          fieldsHtml = fields.length
+            ? `<ul>${fields
+                .map(f => `<li title="${escapeHtml(f.tooltip)}">${escapeHtml(f.name)}</li>`)
+                .join('')}</ul>`
+            : 'None';
+        }
+
+        visualDetailsEl.innerHTML =
+          `<strong>Type:</strong> ${type}<br>` +
+          `<strong>Fields:</strong> ${fieldsHtml}`;
       } else {
         visualDetailsEl.textContent = '';
       }
