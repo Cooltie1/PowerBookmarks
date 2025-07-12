@@ -17,46 +17,63 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-function parseField(obj) {
-  if (!obj || typeof obj !== 'object') return null;
-
-  // Prefer queryRef for display, fall back to nativeQueryRef
-  const name = typeof obj.nativeQueryRef === 'string' ? obj.nativeQueryRef : obj.queryRef;
-  if (typeof name !== 'string') return null;
-
+function parseFieldExpr(expr) {
   let entity;
   let property;
   let fieldType;
   let level;
-  if (obj.field?.Column) {
+
+  if (expr?.Column) {
     fieldType = 'Column';
-    entity = obj.field.Column.Expression?.SourceRef?.Entity;
-    property = obj.field.Column.Property;
-  } else if (obj.field?.Measure) {
+    entity = expr.Column.Expression?.SourceRef?.Entity;
+    property = expr.Column.Property;
+  } else if (expr?.Measure) {
     fieldType = 'Measure';
-    entity = obj.field.Measure.Expression?.SourceRef?.Entity;
-    property = obj.field.Measure.Property;
-  } else if (obj.field?.Hierarchy) {
+    entity = expr.Measure.Expression?.SourceRef?.Entity;
+    property = expr.Measure.Property;
+  } else if (expr?.Hierarchy) {
     fieldType = 'Hierarchy';
-    entity = obj.field.Hierarchy.Expression?.SourceRef?.Entity;
-    property = obj.field.Hierarchy.Hierarchy;
+    entity = expr.Hierarchy.Expression?.SourceRef?.Entity;
+    property = expr.Hierarchy.Hierarchy;
   }
 
-  // Fallback for Aggregation -> Column pattern (implicit measures)
-  if (!entity && !property && obj.field?.Aggregation?.Expression?.Column) {
+  if (!entity && !property && expr?.Aggregation?.Expression?.Column) {
     fieldType = 'Implicit Measure';
-    entity =
-      obj.field.Aggregation.Expression.Column.Expression?.SourceRef?.Entity;
-    property = obj.field.Aggregation.Expression.Column.Property;
+    entity = expr.Aggregation.Expression.Column.Expression?.SourceRef?.Entity;
+    property = expr.Aggregation.Expression.Column.Property;
   }
 
-  // Fallback for HierarchyLevel pattern
-  if (!entity && !property && obj.field?.HierarchyLevel) {
+  if (!entity && !property && expr?.HierarchyLevel) {
     fieldType = 'Hierarchy Level';
-    entity =
-      obj.field.HierarchyLevel.Expression?.Hierarchy?.Expression?.SourceRef?.Entity;
-    property = obj.field.HierarchyLevel.Expression?.Hierarchy?.Hierarchy;
-    level = obj.field.HierarchyLevel.Level;
+    entity = expr.HierarchyLevel.Expression?.Hierarchy?.Expression?.SourceRef?.Entity;
+    property = expr.HierarchyLevel.Expression?.Hierarchy?.Hierarchy;
+    level = expr.HierarchyLevel.Level;
+  }
+
+  return { entity, property, fieldType, level };
+}
+
+function parseField(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+
+  let name;
+  let entity;
+  let property;
+  let fieldType;
+  let level;
+
+  if (obj.parameterExpr) {
+    const info = parseFieldExpr(obj.parameterExpr);
+    ({ entity, property } = info);
+    level = info.level;
+    name = property;
+    fieldType = 'Field Parameter';
+  } else {
+    name = typeof obj.nativeQueryRef === 'string' ? obj.nativeQueryRef : obj.queryRef;
+    if (typeof name !== 'string') return null;
+
+    const info = parseFieldExpr(obj.field);
+    ({ entity, property, fieldType, level } = info);
   }
 
   const label = obj.label || property;
@@ -78,7 +95,10 @@ function collectFields(obj, map) {
 
   for (const value of Object.values(obj)) {
     if (Array.isArray(value)) {
-      for (const v of value) collectFields(v, map);
+      let arr = value;
+      const hasActive = arr.some(v => v && v.active !== false);
+      if (hasActive) arr = arr.filter(v => !v || v.active !== false);
+      for (const v of arr) collectFields(v, map);
     } else if (value && typeof value === 'object') {
       collectFields(value, map);
     }
@@ -93,9 +113,21 @@ function collectFieldsByBucket(data) {
 
   for (const [bucket, obj] of Object.entries(queryState)) {
     const map = new Map();
-    const projections = Array.isArray(obj?.projections) ? obj.projections : [];
+    let projections = Array.isArray(obj?.projections) ? obj.projections : [];
+    const hasActive = projections.some(p => p && p.active !== false);
+    if (hasActive) projections = projections.filter(p => !p || p.active !== false);
     for (const proj of projections) {
       const info = parseField(proj);
+      if (info && !map.has(info.name)) {
+        map.set(info.name, info);
+      }
+    }
+
+    let parameters = Array.isArray(obj?.fieldParameters) ? obj.fieldParameters : [];
+    const hasActiveParams = parameters.some(p => p && p.active !== false);
+    if (hasActiveParams) parameters = parameters.filter(p => !p || p.active !== false);
+    for (const param of parameters) {
+      const info = parseField(param);
       if (info && !map.has(info.name)) {
         map.set(info.name, info);
       }
