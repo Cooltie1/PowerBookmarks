@@ -20,7 +20,7 @@ function parseField(obj) {
   if (!obj || typeof obj !== 'object') return null;
 
   // Prefer queryRef for display, fall back to nativeQueryRef
-  const name = typeof obj.queryRef === 'string' ? obj.queryRef : obj.nativeQueryRef;
+  const name = typeof obj.nativeQueryRef === 'string' ? obj.nativeQueryRef : obj.queryRef;
   if (typeof name !== 'string') return null;
 
   let entity;
