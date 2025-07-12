@@ -7,18 +7,57 @@ let visualColumn = null;
 let visualDetailsEl = null;
 const visualInfoMap = new WeakMap();
 
-function collectFields(obj, out) {
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function parseField(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+
+  // Prefer queryRef for display, fall back to nativeQueryRef
+  const name = typeof obj.queryRef === 'string' ? obj.queryRef : obj.nativeQueryRef;
+  if (typeof name !== 'string') return null;
+
+  let entity;
+  let property;
+  if (obj.field?.Column) {
+    entity = obj.field.Column.Expression?.SourceRef?.Entity;
+    property = obj.field.Column.Property;
+  } else if (obj.field?.Measure) {
+    entity = obj.field.Measure.Expression?.SourceRef?.Entity;
+    property = obj.field.Measure.Property;
+  } else if (obj.field?.Hierarchy) {
+    entity = obj.field.Hierarchy.Expression?.SourceRef?.Entity;
+    property = obj.field.Hierarchy.Hierarchy;
+  }
+
+  const label = obj.label || property;
+  const tooltipParts = [];
+  if (entity) tooltipParts.push(entity);
+  if (label) tooltipParts.push(label);
+  const tooltip = tooltipParts.join('.') || name;
+
+  return { name, tooltip };
+}
+
+function collectFields(obj, map) {
   if (!obj || typeof obj !== 'object') return;
 
-  if (typeof obj.nativeQueryRef === 'string') {
-    out.add(obj.nativeQueryRef);
+  const info = parseField(obj);
+  if (info && !map.has(info.name)) {
+    map.set(info.name, info.tooltip);
   }
 
   for (const value of Object.values(obj)) {
     if (Array.isArray(value)) {
-      for (const v of value) collectFields(v, out);
+      for (const v of value) collectFields(v, map);
     } else if (value && typeof value === 'object') {
-      collectFields(value, out);
+      collectFields(value, map);
     }
   }
 }
@@ -30,15 +69,19 @@ function collectFieldsByBucket(data) {
   if (!queryState || typeof queryState !== 'object') return result;
 
   for (const [bucket, obj] of Object.entries(queryState)) {
-    const fields = new Set();
+    const map = new Map();
     const projections = Array.isArray(obj?.projections) ? obj.projections : [];
     for (const proj of projections) {
-      if (typeof proj.nativeQueryRef === 'string') {
-        fields.add(proj.nativeQueryRef);
+      const info = parseField(proj);
+      if (info && !map.has(info.name)) {
+        map.set(info.name, info.tooltip);
       }
     }
-    if (fields.size > 0) {
-      result[bucket] = Array.from(fields).sort();
+    if (map.size > 0) {
+      const arr = Array.from(map.entries())
+        .map(([name, tooltip]) => ({ name, tooltip }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      result[bucket] = arr;
     }
   }
 
@@ -67,17 +110,23 @@ function setActiveVisual(el) {
         if (Object.keys(buckets).length > 0) {
           const bucketItems = Object.entries(buckets)
             .map(([bucket, fields]) => {
-              const list = fields.map(f => `<li>${f}</li>`).join('');
+              const list = fields
+                .map(f => `<li title="${escapeHtml(f.tooltip)}">${escapeHtml(f.name)}</li>`)
+                .join('');
               return `<li><strong>${bucket}:</strong> <ul>${list}</ul></li>`;
             })
             .join('');
           fieldsHtml = `<ul>${bucketItems}</ul>`;
         } else {
-          const fieldsSet = new Set();
-          collectFields(info.data, fieldsSet);
-          const fields = Array.from(fieldsSet).sort();
+          const fieldMap = new Map();
+          collectFields(info.data, fieldMap);
+          const fields = Array.from(fieldMap.entries())
+            .map(([name, tooltip]) => ({ name, tooltip }))
+            .sort((a, b) => a.name.localeCompare(b.name));
           fieldsHtml = fields.length
-            ? `<ul>${fields.map(f => `<li>${f}</li>`).join('')}</ul>`
+            ? `<ul>${fields
+                .map(f => `<li title="${escapeHtml(f.tooltip)}">${escapeHtml(f.name)}</li>`)
+                .join('')}</ul>`
             : 'None';
         }
 
