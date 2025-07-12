@@ -17,9 +17,11 @@ function escapeHtml(str) {
 }
 
 function parseField(obj) {
-  if (!obj || typeof obj !== 'object' || typeof obj.nativeQueryRef !== 'string') {
-    return null;
-  }
+  if (!obj || typeof obj !== 'object') return null;
+
+  // Prefer queryRef for display, fall back to nativeQueryRef
+  const name = typeof obj.queryRef === 'string' ? obj.queryRef : obj.nativeQueryRef;
+  if (typeof name !== 'string') return null;
 
   let entity;
   let property;
@@ -35,9 +37,12 @@ function parseField(obj) {
   }
 
   const label = obj.label || property;
-  const tooltip = entity ? `${entity}.${label || property || obj.nativeQueryRef}` : label || obj.nativeQueryRef;
+  const tooltipParts = [];
+  if (entity) tooltipParts.push(entity);
+  if (label) tooltipParts.push(label);
+  const tooltip = tooltipParts.join('.') || name;
 
-  return { name: obj.nativeQueryRef, tooltip };
+  return { name, tooltip };
 }
 
 function collectFields(obj, map) {
