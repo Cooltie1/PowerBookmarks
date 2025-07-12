@@ -27,6 +27,7 @@ function parseField(obj) {
   let entity;
   let property;
   let fieldType;
+  let level;
   if (obj.field?.Column) {
     fieldType = 'Column';
     entity = obj.field.Column.Expression?.SourceRef?.Entity;
@@ -49,13 +50,22 @@ function parseField(obj) {
     property = obj.field.Aggregation.Expression.Column.Property;
   }
 
+  // Fallback for HierarchyLevel pattern
+  if (!entity && !property && obj.field?.HierarchyLevel) {
+    fieldType = 'Hierarchy Level';
+    entity =
+      obj.field.HierarchyLevel.Expression?.Hierarchy?.Expression?.SourceRef?.Entity;
+    property = obj.field.HierarchyLevel.Expression?.Hierarchy?.Hierarchy;
+    level = obj.field.HierarchyLevel.Level;
+  }
+
   const label = obj.label || property;
   const tooltipParts = [];
   if (entity) tooltipParts.push(entity);
   if (label) tooltipParts.push(label);
   const tooltip = tooltipParts.join('.') || name;
 
-  return { name, tooltip, entity, property, fieldType };
+  return { name, tooltip, entity, property, fieldType, level };
 }
 
 function collectFields(obj, map) {
@@ -106,7 +116,8 @@ function showTooltip(e, data) {
   tooltipEl.innerHTML =
     `<strong>Entity:</strong> ${escapeHtml(data.entity || '')}<br>` +
     `<strong>Field:</strong> ${escapeHtml(data.field || '')}<br>` +
-    `<strong>Field Type:</strong> ${escapeHtml(data.fieldType || '')}`;
+    `<strong>Field Type:</strong> ${escapeHtml(data.fieldType || '')}` +
+    (data.level ? `<br><strong>Level:</strong> ${escapeHtml(data.level)}` : '');
   tooltipEl.style.display = 'block';
   moveTooltip(e);
 }
@@ -128,6 +139,7 @@ function attachTooltipHandlers(container) {
       entity: item.getAttribute('data-entity'),
       field: item.getAttribute('data-field'),
       fieldType: item.getAttribute('data-field-type'),
+      level: item.getAttribute('data-level'),
     };
     item.addEventListener('mouseenter', e => showTooltip(e, data));
     item.addEventListener('mousemove', moveTooltip);
@@ -160,7 +172,7 @@ function setActiveVisual(el) {
             .map(([bucket, fields]) => {
               const list = fields
                 .map(f =>
-                  `<li data-entity="${escapeHtml(f.entity || '')}" data-field="${escapeHtml(f.property || '')}" data-field-type="${escapeHtml(f.fieldType || '')}">${escapeHtml(f.name)}</li>`
+                  `<li data-entity="${escapeHtml(f.entity || '')}" data-field="${escapeHtml(f.property || '')}" data-field-type="${escapeHtml(f.fieldType || '')}" data-level="${escapeHtml(f.level || '')}">${escapeHtml(f.name)}</li>`
                 )
                 .join('');
               return `<li><strong>${bucket}:</strong> <ul>${list}</ul></li>`;
@@ -175,7 +187,7 @@ function setActiveVisual(el) {
           fieldsHtml = fields.length
             ? `<ul>${fields
                 .map(f =>
-                  `<li data-entity="${escapeHtml(f.entity || '')}" data-field="${escapeHtml(f.property || '')}" data-field-type="${escapeHtml(f.fieldType || '')}">${escapeHtml(f.name)}</li>`
+                  `<li data-entity="${escapeHtml(f.entity || '')}" data-field="${escapeHtml(f.property || '')}" data-field-type="${escapeHtml(f.fieldType || '')}" data-level="${escapeHtml(f.level || '')}">${escapeHtml(f.name)}</li>`
                 )
                 .join('')}</ul>`
             : 'None';
