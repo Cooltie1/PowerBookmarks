@@ -95,10 +95,7 @@ function collectFields(obj, map) {
 
   for (const value of Object.values(obj)) {
     if (Array.isArray(value)) {
-      let arr = value;
-      const hasActive = arr.some(v => v && v.active !== false);
-      if (hasActive) arr = arr.filter(v => !v || v.active !== false);
-      for (const v of arr) collectFields(v, map);
+      for (const v of value) collectFields(v, map);
     } else if (value && typeof value === 'object') {
       collectFields(value, map);
     }
@@ -114,8 +111,7 @@ function collectFieldsByBucket(data) {
   for (const [bucket, obj] of Object.entries(queryState)) {
     const map = new Map();
     let projections = Array.isArray(obj?.projections) ? obj.projections : [];
-    const hasActive = projections.some(p => p && p.active !== false);
-    if (hasActive) projections = projections.filter(p => !p || p.active !== false);
+    projections = projections.filter(p => !p || p.active !== false);
     for (const proj of projections) {
       const info = parseField(proj);
       if (info && !map.has(info.name)) {
@@ -124,8 +120,6 @@ function collectFieldsByBucket(data) {
     }
 
     let parameters = Array.isArray(obj?.fieldParameters) ? obj.fieldParameters : [];
-    const hasActiveParams = parameters.some(p => p && p.active !== false);
-    if (hasActiveParams) parameters = parameters.filter(p => !p || p.active !== false);
     for (const param of parameters) {
       const info = parseField(param);
       if (info && !map.has(info.name)) {
