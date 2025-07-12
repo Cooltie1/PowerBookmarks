@@ -52,7 +52,7 @@ function parseField(obj) {
 
   // Fallback for HierarchyLevel pattern
   if (!entity && !property && obj.field?.HierarchyLevel) {
-    fieldType = 'Hierarchy Level';
+    fieldType = 'Hierarchy';
     entity =
       obj.field.HierarchyLevel.Expression?.Hierarchy?.Expression?.SourceRef?.Entity;
     property = obj.field.HierarchyLevel.Expression?.Hierarchy?.Hierarchy;
