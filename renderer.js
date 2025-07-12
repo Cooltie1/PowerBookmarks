@@ -41,6 +41,14 @@ function parseField(obj) {
     property = obj.field.Hierarchy.Hierarchy;
   }
 
+  // Fallback for Aggregation -> Column pattern (implicit measures)
+  if (!entity && !property && obj.field?.Aggregation?.Expression?.Column) {
+    fieldType = 'Implicit Measure';
+    entity =
+      obj.field.Aggregation.Expression.Column.Expression?.SourceRef?.Entity;
+    property = obj.field.Aggregation.Expression.Column.Property;
+  }
+
   const label = obj.label || property;
   const tooltipParts = [];
   if (entity) tooltipParts.push(entity);
