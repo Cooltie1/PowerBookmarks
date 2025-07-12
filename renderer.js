@@ -10,8 +10,8 @@ const visualInfoMap = new WeakMap();
 function collectFields(obj, out) {
   if (!obj || typeof obj !== 'object') return;
 
-  if (typeof obj.queryRef === 'string') {
-    out.add(obj.queryRef);
+  if (typeof obj.nativeQueryRef === 'string') {
+    out.add(obj.nativeQueryRef);
   }
 
   for (const value of Object.values(obj)) {
@@ -33,8 +33,8 @@ function collectFieldsByBucket(data) {
     const fields = new Set();
     const projections = Array.isArray(obj?.projections) ? obj.projections : [];
     for (const proj of projections) {
-      if (typeof proj.queryRef === 'string') {
-        fields.add(proj.queryRef);
+      if (typeof proj.nativeQueryRef === 'string') {
+        fields.add(proj.nativeQueryRef);
       }
     }
     if (fields.size > 0) {
