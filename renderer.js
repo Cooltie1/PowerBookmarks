@@ -78,7 +78,10 @@ function collectFields(obj, map) {
 
   for (const value of Object.values(obj)) {
     if (Array.isArray(value)) {
-      for (const v of value) collectFields(v, map);
+      let arr = value;
+      const hasActive = arr.some(v => v && v.active !== false);
+      if (hasActive) arr = arr.filter(v => !v || v.active !== false);
+      for (const v of arr) collectFields(v, map);
     } else if (value && typeof value === 'object') {
       collectFields(value, map);
     }
@@ -93,7 +96,9 @@ function collectFieldsByBucket(data) {
 
   for (const [bucket, obj] of Object.entries(queryState)) {
     const map = new Map();
-    const projections = Array.isArray(obj?.projections) ? obj.projections : [];
+    let projections = Array.isArray(obj?.projections) ? obj.projections : [];
+    const hasActive = projections.some(p => p && p.active !== false);
+    if (hasActive) projections = projections.filter(p => !p || p.active !== false);
     for (const proj of projections) {
       const info = parseField(proj);
       if (info && !map.has(info.name)) {
