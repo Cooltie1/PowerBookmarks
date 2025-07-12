@@ -5,6 +5,7 @@ const { ipcRenderer } = require('electron');
 let activeVisualEl = null;
 let visualColumn = null;
 let visualDetailsEl = null;
+let tooltipEl = null;
 const visualInfoMap = new WeakMap();
 
 function escapeHtml(str) {
@@ -25,13 +26,17 @@ function parseField(obj) {
 
   let entity;
   let property;
+  let fieldType;
   if (obj.field?.Column) {
+    fieldType = 'Column';
     entity = obj.field.Column.Expression?.SourceRef?.Entity;
     property = obj.field.Column.Property;
   } else if (obj.field?.Measure) {
+    fieldType = 'Measure';
     entity = obj.field.Measure.Expression?.SourceRef?.Entity;
     property = obj.field.Measure.Property;
   } else if (obj.field?.Hierarchy) {
+    fieldType = 'Hierarchy';
     entity = obj.field.Hierarchy.Expression?.SourceRef?.Entity;
     property = obj.field.Hierarchy.Hierarchy;
   }
@@ -42,7 +47,7 @@ function parseField(obj) {
   if (label) tooltipParts.push(label);
   const tooltip = tooltipParts.join('.') || name;
 
-  return { name, tooltip };
+  return { name, tooltip, entity, property, fieldType };
 }
 
 function collectFields(obj, map) {
@@ -50,7 +55,7 @@ function collectFields(obj, map) {
 
   const info = parseField(obj);
   if (info && !map.has(info.name)) {
-    map.set(info.name, info.tooltip);
+    map.set(info.name, info);
   }
 
   for (const value of Object.values(obj)) {
@@ -74,13 +79,13 @@ function collectFieldsByBucket(data) {
     for (const proj of projections) {
       const info = parseField(proj);
       if (info && !map.has(info.name)) {
-        map.set(info.name, info.tooltip);
+        map.set(info.name, info);
       }
     }
     if (map.size > 0) {
-      const arr = Array.from(map.entries())
-        .map(([name, tooltip]) => ({ name, tooltip }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+      const arr = Array.from(map.values()).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
       result[bucket] = arr;
     }
   }
@@ -88,7 +93,42 @@ function collectFieldsByBucket(data) {
   return result;
 }
 
+function showTooltip(e, data) {
+  if (!tooltipEl) return;
+  tooltipEl.innerHTML =
+    `<strong>Entity:</strong> ${escapeHtml(data.entity || '')}<br>` +
+    `<strong>Field:</strong> ${escapeHtml(data.field || '')}<br>` +
+    `<strong>Field Type:</strong> ${escapeHtml(data.fieldType || '')}`;
+  tooltipEl.style.display = 'block';
+  moveTooltip(e);
+}
+
+function moveTooltip(e) {
+  if (!tooltipEl) return;
+  tooltipEl.style.left = e.pageX + 10 + 'px';
+  tooltipEl.style.top = e.pageY + 10 + 'px';
+}
+
+function hideTooltip() {
+  if (tooltipEl) tooltipEl.style.display = 'none';
+}
+
+function attachTooltipHandlers(container) {
+  const items = container.querySelectorAll('li[data-entity]');
+  items.forEach(item => {
+    const data = {
+      entity: item.getAttribute('data-entity'),
+      field: item.getAttribute('data-field'),
+      fieldType: item.getAttribute('data-field-type'),
+    };
+    item.addEventListener('mouseenter', e => showTooltip(e, data));
+    item.addEventListener('mousemove', moveTooltip);
+    item.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
 function setActiveVisual(el) {
+  hideTooltip();
   if (activeVisualEl) {
     activeVisualEl.classList.remove('active');
   }
@@ -111,7 +151,9 @@ function setActiveVisual(el) {
           const bucketItems = Object.entries(buckets)
             .map(([bucket, fields]) => {
               const list = fields
-                .map(f => `<li title="${escapeHtml(f.tooltip)}">${escapeHtml(f.name)}</li>`)
+                .map(f =>
+                  `<li data-entity="${escapeHtml(f.entity || '')}" data-field="${escapeHtml(f.property || '')}" data-field-type="${escapeHtml(f.fieldType || '')}">${escapeHtml(f.name)}</li>`
+                )
                 .join('');
               return `<li><strong>${bucket}:</strong> <ul>${list}</ul></li>`;
             })
@@ -120,12 +162,13 @@ function setActiveVisual(el) {
         } else {
           const fieldMap = new Map();
           collectFields(info.data, fieldMap);
-          const fields = Array.from(fieldMap.entries())
-            .map(([name, tooltip]) => ({ name, tooltip }))
+          const fields = Array.from(fieldMap.values())
             .sort((a, b) => a.name.localeCompare(b.name));
           fieldsHtml = fields.length
             ? `<ul>${fields
-                .map(f => `<li title="${escapeHtml(f.tooltip)}">${escapeHtml(f.name)}</li>`)
+                .map(f =>
+                  `<li data-entity="${escapeHtml(f.entity || '')}" data-field="${escapeHtml(f.property || '')}" data-field-type="${escapeHtml(f.fieldType || '')}">${escapeHtml(f.name)}</li>`
+                )
                 .join('')}</ul>`
             : 'None';
         }
@@ -133,6 +176,7 @@ function setActiveVisual(el) {
         visualDetailsEl.innerHTML =
           `<strong>Type:</strong> ${type}<br>` +
           `<strong>Fields:</strong> ${fieldsHtml}`;
+        attachTooltipHandlers(visualDetailsEl);
       } else {
         visualDetailsEl.textContent = '';
       }
@@ -402,6 +446,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const metaEl = document.getElementById('bookmark-meta');
   visualColumn = document.getElementById('visual-column');
   visualDetailsEl = document.getElementById('visual-details');
+  tooltipEl = document.getElementById('tooltip');
   const bookmarkColumn = document.getElementById('bookmark-column');
   const bookmarkResizer = document.getElementById('bookmark-resizer');
   const toggleAllBtn = document.getElementById('toggle-all');
