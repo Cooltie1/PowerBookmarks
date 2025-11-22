@@ -7,6 +7,10 @@ let visualColumn = null;
 let visualDetailsEl = null;
 let tooltipEl = null;
 const visualInfoMap = new WeakMap();
+let activeBookmarkInfo = null;
+let currentProjectFolder = null;
+let currentBookmarksFile = null;
+let currentBookmarkFolder = null;
 
 function escapeHtml(str) {
   return String(str)
@@ -497,9 +501,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const bookmarkResizer = document.getElementById('bookmark-resizer');
   const toggleAllBtn = document.getElementById('toggle-all');
   const toggleVisualsBtn = document.getElementById('toggle-visuals');
+  const deleteScriptBtn = document.getElementById('delete-script');
   let activeBookmarkEl = null;
   let allCollapsed = true;
   let visualsCollapsed = true;
+
+  function updateDeleteButtonState() {
+    if (!deleteScriptBtn) return;
+    deleteScriptBtn.style.display = currentProjectFolder ? 'inline-block' : 'none';
+    deleteScriptBtn.disabled = !activeBookmarkInfo;
+  }
 
   function setAllCollapsed(collapsed) {
     const containers = document.querySelectorAll('#bookmark-list .children-container');
@@ -580,6 +591,12 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadProject(folderPath) {
+    currentProjectFolder = folderPath;
+    currentBookmarksFile = null;
+    currentBookmarkFolder = null;
+    activeBookmarkInfo = null;
+    updateDeleteButtonState();
+
     list.innerHTML = '';
     detailEl.innerHTML = '';
     metaEl.innerHTML = '';
@@ -599,6 +616,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const bookmarksFile = await findBookmarksJson(folderPath);
     if (!bookmarksFile) {
       list.textContent = 'bookmarks.json not found';
+      updateDeleteButtonState();
       return;
     }
 
@@ -607,6 +625,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const data = JSON.parse(content);
       const items = Array.isArray(data.items) ? data.items : [];
       const bookmarkFolder = path.dirname(bookmarksFile);
+      currentBookmarksFile = bookmarksFile;
+      currentBookmarkFolder = bookmarkFolder;
       const pages = new Map();
 
       for (const item of items) {
@@ -672,13 +692,21 @@ window.addEventListener('DOMContentLoaded', () => {
                 metaEl.innerHTML = '';
                 detailEl.innerHTML = '';
                 toggleVisualsBtn.style.display = 'none';
+                activeBookmarkInfo = null;
+                updateDeleteButtonState();
                 return;
               }
               setActive(childDiv);
+              activeBookmarkInfo = {
+                name: info.name,
+                displayName: info.displayName,
+                folder: bookmarkFolder,
+              };
               await showBookmarkDetails(metaEl, detailEl, bookmarkFolder, info.name);
               visualsCollapsed = true;
               setVisualsCollapsed(visualsCollapsed);
               toggleVisualsBtn.style.display = 'inline-block';
+              updateDeleteButtonState();
             });
             groupChildrenBox.appendChild(childDiv);
           }
@@ -708,13 +736,21 @@ window.addEventListener('DOMContentLoaded', () => {
               metaEl.innerHTML = '';
               detailEl.innerHTML = '';
               toggleVisualsBtn.style.display = 'none';
+              activeBookmarkInfo = null;
+              updateDeleteButtonState();
               return;
             }
             setActive(bookmarkDiv);
+            activeBookmarkInfo = {
+              name: info.name,
+              displayName: info.displayName,
+              folder: bookmarkFolder,
+            };
             await showBookmarkDetails(metaEl, detailEl, bookmarkFolder, info.name);
             visualsCollapsed = true;
             setVisualsCollapsed(visualsCollapsed);
             toggleVisualsBtn.style.display = 'inline-block';
+            updateDeleteButtonState();
           });
           pageChildrenBox.appendChild(bookmarkDiv);
         }
@@ -735,10 +771,74 @@ window.addEventListener('DOMContentLoaded', () => {
 
       // Apply global collapse state to new elements
       setAllCollapsed(allCollapsed);
+      updateDeleteButtonState();
     } catch (e) {
       console.error('Failed to read bookmarks.json:', e);
       list.textContent = 'Failed to load bookmarks';
     }
+  }
+
+  async function deleteScript() {
+    if (!activeBookmarkInfo || !currentBookmarkFolder) return;
+
+    const { name, displayName } = activeBookmarkInfo;
+    const confirmed = confirm(
+      `Are you sure you want to delete the script "${displayName}"? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    const scriptPath = path.join(currentBookmarkFolder, `${name}.bookmark.json`);
+
+    try {
+      await fs.unlink(scriptPath);
+    } catch (err) {
+      alert(`Failed to delete script: ${err.message}`);
+      return;
+    }
+
+    if (currentBookmarksFile) {
+      try {
+        const bookmarksContent = await fs.readFile(currentBookmarksFile, 'utf-8');
+        const bookmarksData = JSON.parse(bookmarksContent);
+
+        if (Array.isArray(bookmarksData.items)) {
+          const updatedItems = [];
+          let changed = false;
+
+          for (const item of bookmarksData.items) {
+            if (Array.isArray(item.children)) {
+              const filteredChildren = item.children.filter(child => child !== name);
+              if (filteredChildren.length !== item.children.length) changed = true;
+              if (filteredChildren.length > 0) {
+                updatedItems.push({ ...item, children: filteredChildren });
+              } else {
+                changed = true;
+              }
+            } else if (item.name === name) {
+              changed = true;
+            } else {
+              updatedItems.push(item);
+            }
+          }
+
+          if (changed) {
+            const updatedContent = JSON.stringify(
+              { ...bookmarksData, items: updatedItems },
+              null,
+              2
+            );
+            await fs.writeFile(currentBookmarksFile, updatedContent, 'utf-8');
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to update bookmarks.json after deletion:', err.message);
+      }
+    }
+
+    activeBookmarkInfo = null;
+    updateDeleteButtonState();
+    await loadProject(currentProjectFolder);
   }
 
   chooseBtn.addEventListener('click', async () => {
@@ -747,6 +847,8 @@ window.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('lastFolderPath', folderPath);
     await loadProject(folderPath);
   });
+
+  deleteScriptBtn.addEventListener('click', deleteScript);
 
   (async () => {
     const last = localStorage.getItem('lastFolderPath');

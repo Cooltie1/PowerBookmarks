@@ -218,6 +218,12 @@
       margin: 0 0 10px 0;
     }
 
+    .bookmark-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     #bookmark-meta {
       margin: 0 0 10px 0;
       line-height: 1.4;
@@ -237,6 +243,29 @@
 
     #toggle-all:hover {
       background: #f0f0f0;
+    }
+
+    #delete-script {
+      display: none;
+      background: none;
+      color: #c62828;
+      border: 1px solid #e0e0e0;
+      padding: 4px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+    }
+
+    #delete-script:hover {
+      background: #ffebee;
+      border-color: #ffcdd2;
+    }
+
+    #delete-script:disabled {
+      cursor: not-allowed;
+      color: #999;
+      border-color: #ddd;
+      background: #f9f9f9;
     }
 
     #toggle-visuals {
@@ -287,7 +316,10 @@
     <div class="column" id="bookmark-column">
       <div class="bookmark-header">
         <h3 style="margin:0;">Bookmarks</h3>
-        <button id="toggle-all">Expand All</button>
+        <div class="bookmark-actions">
+          <button id="delete-script" disabled>Delete Script</button>
+          <button id="toggle-all">Expand All</button>
+        </div>
       </div>
       <div class="scroll-box">
         <ul id="bookmark-list"></ul>
